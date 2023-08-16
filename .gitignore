@@ -6,6 +6,8 @@ validation/rna_seq/SRAs/*
 validation/rna_seq/e_coli/*
 validation/rna_seq/b_sub_168/*
 validation/rna_seq/p_fluor/*
+validation/rna_seq/p_aeru/*
+validation/rna_seq/m_tuber/*
 
 validation/alignment/switch_seqs_delta*
 validation/alignment/plots/*

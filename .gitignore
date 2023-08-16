@@ -11,4 +11,4 @@ validation/rna_seq/m_tuber/*
 validation/rna_seq/s_elon/*
 
 validation/alignment/switch_seqs_delta*
-validation/alignment/plots/*
+validation/alignment/outputs/*

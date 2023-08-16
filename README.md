@@ -17,3 +17,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 **p_fluor_wiesmann2022_acc.txt**: Run accession list for *P. fluorescens* from [Wiesmann 2022](https://www.nature.com/articles/s41396-022-01343-3) ([GSE190448](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE190448)).
 
 **p_aeru_wiesmann2022_acc.txt**: Run accession list for *P. aeruginosa* from [Wiesmann 2022](https://www.nature.com/articles/s41396-022-01343-3) ([GSE190448](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE190448)).
+
+**m_tuber_H37Rv_martini2023_acc.txt**: Run accession list for *M. tuberculosis* str H37Rv from [Martini 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10178195/) ([GSE218354](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE218354))
+
+**s_elon_lu2023_acc.txt**: Run accession list for *S. elongatus* from [Lu 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10365998/) ([GSE227397](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227397))

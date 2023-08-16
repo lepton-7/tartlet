@@ -4,6 +4,7 @@
 
 validation/rna_seq/SRAs/*
 validation/rna_seq/e_coli/*
+validation/rna_seq/b_sub_168/*
 
 validation/alignment/switch_seqs_delta*
 validation/alignment/plots/*

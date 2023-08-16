@@ -8,6 +8,7 @@ validation/rna_seq/b_sub_168/*
 validation/rna_seq/p_fluor/*
 validation/rna_seq/p_aeru/*
 validation/rna_seq/m_tuber/*
+validation/rna_seq/s_elon/*
 
 validation/alignment/switch_seqs_delta*
 validation/alignment/plots/*

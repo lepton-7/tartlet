@@ -28,7 +28,9 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **c_vibrioides_mclaughlin2023_acc**: Run accession list for *Caulobacter vibrioides* from [McLaughlin 2023](https://pubmed.ncbi.nlm.nih.gov/37645952/) ([GSE241057](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE241057)).
 
-**a_fischeri_ES114_thompson2016_acc**: Run accession list for *Aliivibrio fischeri ES114* from [Thompson 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5409853/) ([GSE80607](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE80607)).
+~~**a_fischeri_ES114_thompson2016_acc**: Run accession list for *Aliivibrio fischeri ES114* from [Thompson 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5409853/) ([GSE80607](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE80607)).~~ *These ended up being single ended reads.*
+
+**a_fischeri_ES114_griend2023_acc**: RUn accession list for *Aliivibrio fischeri ES114* from [Griend 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10441365/) ([GSE237189](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE237189)).
 
 **b_theta_bolam2019_acc**: Run accession list for *Bacteroides thetaiotaomicron* from [Bolam 2019](https://www.nature.com/articles/s41564-019-0466-x) ([GSE129572](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE129572)).
 

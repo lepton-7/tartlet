@@ -11,5 +11,6 @@ validation/rna_seq/m_tuber/*
 validation/rna_seq/s_elon/*
 validation/rna_seq/a_fischeri_ES114/*
 validation/rna_seq/a_rabiei/*
+validation/rna_seq/b_theta/*
 
 validation/alignment/outputs/**/switch_seqs_delta*

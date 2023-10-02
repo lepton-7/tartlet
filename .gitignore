@@ -12,5 +12,8 @@ validation/rna_seq/s_elon/*
 validation/rna_seq/a_fischeri_ES114/*
 validation/rna_seq/a_rabiei/*
 validation/rna_seq/b_theta/*
+validation/rna_seq/c_vibrioides/*
+validation/rna_seq/s_spcc6803/*
+validation/rna_seq/s_coelicolor/*
 
 validation/alignment/outputs/**/switch_seqs_delta*

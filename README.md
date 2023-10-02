@@ -42,7 +42,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **s_coelicolor_wezel2023_wt_acc**: Run accesion list for *Streptomyces coelicolor* from [GSE234439](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE234439). This list only captures wild-type runs.
 
-**a_rabiei_snrc2015_acc**: Run accession list for the fungus *Ascochyta rabiei* from [PRJNA288273](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA288273); [SRX1080581](https://www.ncbi.nlm.nih.gov/sra/SRX1080581[accn]). Of the 31 runs, only the ones in paired read layout are captured in the list. *Seems like the paired reads are split into individual SRA runs. The second in pair file was renamed according to first in pair's SRA ID*.
+~~**a_rabiei_snrc2015_acc**: Run accession list for the fungus *Ascochyta rabiei* from [PRJNA288273](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA288273); [SRX1080581](https://www.ncbi.nlm.nih.gov/sra/SRX1080581[accn]). Of the 31 runs, only the ones in paired read layout are captured in the list. *Seems like the paired reads are split into individual SRA runs. The second in pair file was renamed according to first in pair's SRA ID*~~. *Did not work; not worth troubleshooting*.
 
 **g_hirsutum_sun2023_acc**: Run accession list for C O T T O N *Gossypium hirsutum* from [GSE182982](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE182982).
 

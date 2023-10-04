@@ -1,5 +1,7 @@
 *.pyc
 
+*.egg-info
+
 *test*
 
 start_env.sh

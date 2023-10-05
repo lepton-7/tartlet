@@ -16,7 +16,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/lepton-7/tart",
-    py_modules=["targeted_pipeline"],
+    py_modules=["targeted_pipeline", "."],
     packages=find_packages(),
     install_requires=[requirements],
     python_requires=">=3.9,<3.12",

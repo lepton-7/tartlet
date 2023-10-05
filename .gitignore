@@ -5,6 +5,7 @@
 *test*
 
 start_env.sh
+install.sh
 
 validation/rna_seq/SRAs/*
 validation/rna_seq/e_coli/*

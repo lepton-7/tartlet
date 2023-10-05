@@ -11,7 +11,7 @@ from glob import glob
 from pathlib import Path
 from Bio import SeqIO, Seq
 from collections import defaultdict
-from tart.utils.helpers import print
+from tart.utils.utils import print
 from tart.utils.mpi_context import BasicMPIContext
 
 

@@ -1,6 +1,6 @@
 import requests
 
-from tart.utils.helpers import print
+from tart.utils.utils import print
 
 current_ver = 14.9
 

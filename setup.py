@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="bio-tart",
-    version="0.1.1",
+    version="0.1.2",
     author="Sachit Kshatriya",
     author_email="sxk1464@case.edu",
     license="MIT",
@@ -16,7 +16,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/lepton-7/tart",
-    py_modules=["targeted_pipeline", "."],
+    py_modules=[],
     packages=find_packages(),
     install_requires=[requirements],
     python_requires=">=3.9,<3.12",
@@ -26,7 +26,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "tart-targeted = targeted_pipeline:cli",
+            "tart-targeted = tart.targeted_pipeline:cli",
         ],
     },
 )

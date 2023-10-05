@@ -1,4 +1,4 @@
-*.pyc
+*.py[doc]
 
 *.egg-info
 

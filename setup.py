@@ -18,6 +18,7 @@ setup(
     url="https://github.com/lepton-7/tart",
     py_modules=[],
     packages=find_packages(),
+    include_package_data=True,
     install_requires=[requirements],
     python_requires=">=3.9,<3.12",
     classifiers=[

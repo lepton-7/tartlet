@@ -1,5 +1,5 @@
-import requests
 import click
+import requests
 
 from pathlib import Path
 from subprocess import run, PIPE
@@ -72,6 +72,7 @@ def make_riboswitch_cm(ver: float = current_ver):
     run(["cmpress", "-F", f"{cm}"])
 
 
+# DEPRECATE: not necessary anymore
 def make_clanin(ver: float = current_ver):
     url = f"https://ftp.ebi.ac.uk/pub/databases/Rfam/{ver}/Rfam.clanin"
 

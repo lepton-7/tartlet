@@ -1,7 +1,9 @@
 import requests
+import click
 
 from pathlib import Path
 from subprocess import run, PIPE
+from tart.utils.mpi_context import BasicMPIContext
 from tart.utils.utils import print, get_datapath_obj
 
 current_ver = 14.9
@@ -115,10 +117,10 @@ def cmscan(
         )
 
 
-def scan_for_riboswitches(
-    seq_file,
-    out_dir,
-    options: tuple or list,
+def riboswitch_cmscan(
+    seq_file: str or Path,
+    out_dir: str or Path,
+    options: tuple or list = [],
     ver: float = current_ver,
 ):
     data_dir_obj = get_datapath_obj()
@@ -141,3 +143,25 @@ def scan_for_riboswitches(
         switch_cm,
         options=["--clanin", clanin, *options],
     )
+
+
+@click.command()
+@click.option(
+    "-o", "--out-dir", required=True, help="Output directory for cmscan output."
+)
+@click.argument("total_files", nargs=-1)
+def dafault_scan_for_riboswitches(out_dir, total_files: tuple or list):
+    f"""Runs input files against the latest (version {current_ver}) rfam riboswitch covariance models.
+
+    Supports MPI acceleration.
+
+    Args:
+        out_dir (str): Output directory for cmscan output files.
+        total_files (tupleorlist): List or tuple of file paths to pass as cmscan inputs.
+    """
+    # MPI setup
+    mp_con = BasicMPIContext([*total_files])
+    worker_list = mp_con.generate_worker_list()
+
+    for fasta_path in worker_list:
+        riboswitch_cmscan(Path(fasta_path), Path(out_dir))

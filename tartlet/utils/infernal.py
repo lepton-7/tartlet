@@ -151,7 +151,7 @@ def riboswitch_cmscan(
 )
 @click.argument("total_files", nargs=-1)
 def dafault_scan_for_riboswitches(out_dir, total_files: tuple or list):
-    f"""Runs input files against the latest (version {current_ver}) rfam riboswitch covariance models.
+    """Runs input files against the latest (14.9) rfam riboswitch covariance models.
 
     Supports MPI acceleration.
 

@@ -28,7 +28,7 @@ setup(
     entry_points={
         "console_scripts": [
             "tart-targeted = tart.entry_points:targeted",
-            "tart-utils =tart.entry_points:utils",
+            "tart-utils = tart.entry_points:utils",
         ],
     },
 )

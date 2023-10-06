@@ -1,6 +1,8 @@
 import requests
 
-from tart.utils.utils import print
+from pathlib import Path
+from subprocess import run, PIPE
+from tart.utils.utils import print, get_datapath_obj
 
 current_ver = 14.9
 
@@ -49,8 +51,12 @@ rfam_riboswitch_accessions = [
 ]
 
 
-def make_riboswitch_cm():
-    with open("data/riboswitches.cm", "w") as f:
+def make_riboswitch_cm(ver: float = current_ver):
+    # Get a pathlib.Path object for the data subdirectory
+    data_dir_obj = get_datapath_obj()
+    cm = str(data_dir_obj.joinpath(f"riboswitches_{ver}.cm"))
+
+    with open(cm, "w") as f:
         for acc in rfam_riboswitch_accessions:
             address = f"https://rfam.org/family/{acc}/cm"
 
@@ -60,9 +66,78 @@ def make_riboswitch_cm():
             print(f"Ingested {acc}")
 
 
-def get_clanin(ver: str = current_ver):
+def make_clanin(ver: float = current_ver):
     url = f"https://ftp.ebi.ac.uk/pub/databases/Rfam/{ver}/Rfam.clanin"
 
-    with open(f"data/rfam_{ver}.clanin", "w") as f:
+    # Get a pathlib.Path object for the data subdirectory
+    data_dir_obj = get_datapath_obj()
+    clanin = str(data_dir_obj.joinpath(f"rfam_{ver}.clanin"))
+
+    with open(clanin, "w") as f:
         r = requests.get(url)
         f.write(r.text)
+
+
+def cmscan(
+    seq_file: Path,
+    out_dir: Path,
+    cm_path: Path,
+    options: tuple or list,
+    out_file: Path = None,
+):
+    seq_file_name = seq_file.name
+
+    if out_file is None:
+        out_file = out_dir.joinpath(f"{seq_file_name}.txt")
+
+    call = run(
+        [
+            "cmscan",
+            "--cut_ga",
+            "--rfam",
+            "--nohmmonly",
+            "--noali",
+            "--tblout",
+            f"{out_file}",
+            f"{cm_path}",
+            f"{seq_file}",
+            *options,
+        ],
+        stdout=PIPE,
+        stderr=PIPE,
+    )
+    if call.returncode:
+        print("Failed:\n", call.stderr.decode("utf-8"))
+    else:
+        print(call.stdout.decode("utf-8"))
+        print(
+            f"Successfully completed cmscan on {seq_file_name} against {cm_path.name}."
+        )
+
+
+def scan_for_riboswitches(
+    seq_file,
+    out_dir,
+    options: tuple or list,
+    ver: float = current_ver,
+):
+    data_dir_obj = get_datapath_obj()
+    switch_cm = data_dir_obj.joinpath(f"riboswitches_{ver}.cm")
+    clanin = data_dir_obj.joinpath(f"rfam_{ver}.clanin")
+
+    if not switch_cm.exists():
+        raise ValueError(
+            f"Riboswitch CM for RFAM {ver} does not exist. Call make_riboswitch_cm({ver})."
+        )
+
+    if not clanin.exists():
+        raise ValueError(
+            f"Clanin file for RFAM {ver} does not exist. Call make_clanin({ver})."
+        )
+
+    cmscan(
+        Path(seq_file),
+        Path(out_dir),
+        switch_cm,
+        options=["--clanin", clanin, *options],
+    )

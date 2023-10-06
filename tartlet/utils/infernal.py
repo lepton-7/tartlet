@@ -67,6 +67,10 @@ def make_riboswitch_cm(ver: float = current_ver):
             f.write(r.text)
             print(f"Ingested {acc}")
 
+    print("Starting cmpress")
+
+    run(["cmpress", "-F", f"{cm}"])
+
 
 def make_clanin(ver: float = current_ver):
     url = f"https://ftp.ebi.ac.uk/pub/databases/Rfam/{ver}/Rfam.clanin"
@@ -86,34 +90,49 @@ def cmscan(
     cm_path: Path,
     options: tuple or list,
     out_file: Path = None,
+    rank: int = 0,
+    no_stats: bool = False,
 ):
+    # Coerce arguments to proper types:
+    seq_file = Path(seq_file)
+    out_dir = Path(out_dir)
+    cm_path = Path(cm_path)
+
+    # The command list passed to run() must contain only strings.
+    options = [str(x) for x in options]
+
     seq_file_name = seq_file.name
 
-    if out_file is None:
-        out_file = out_dir.joinpath(f"{seq_file_name}.txt")
-
-    call = run(
-        [
-            "cmscan",
-            "--cut_ga",
-            "--rfam",
-            "--nohmmonly",
-            "--noali",
-            "--tblout",
-            f"{out_file}",
-            f"{cm_path}",
-            f"{seq_file}",
-            *options,
-        ],
-        stdout=PIPE,
-        stderr=PIPE,
+    # Set or coerce
+    out_file = (
+        out_dir.joinpath(f"{seq_file_name}.txt") if out_file is None else Path(out_file)
     )
+
+    cmd = [
+        "cmscan",
+        "--cut_ga",
+        "--rfam",
+        "--nohmmonly",
+        "--noali",
+        "--tblout",
+        f"{out_file}",
+        *options,
+        f"{cm_path}",
+        f"{seq_file}",
+    ]
+    call = run(cmd, stdout=PIPE, stderr=PIPE)
+
     if call.returncode:
-        print("Failed:\n", call.stderr.decode("utf-8"))
+        print(f"Failed on worker {rank}:")
+        print(f"Command: {cmd}")
+        print(f"Output: {call.stdout.decode('utf-8')}")
+        print(f"Error: {call.stderr.decode('utf-8')}")
+
     else:
-        print(call.stdout.decode("utf-8"))
+        if not no_stats:
+            print(call.stdout.decode("utf-8"))
         print(
-            f"Successfully completed cmscan on {seq_file_name} against {cm_path.name}."
+            f"Successfully completed cmscan for {seq_file_name} against {cm_path.name} on worker {rank}."
         )
 
 
@@ -122,26 +141,39 @@ def riboswitch_cmscan(
     out_dir: str or Path,
     options: tuple or list = [],
     ver: float = current_ver,
+    **kwargs,
 ):
+    """Runs a cmscan instance against a riboswitch-specific covariance model.
+
+    Args:
+        seq_file (strorPath): cmscan input file.
+        out_dir (strorPath): Directory for cmscan output.
+        options (tupleorlist, optional): Optional options to pass to the cmscan call. Defaults to [].
+        ver (float, optional): CM rfam version. Defaults to current_ver.
+
+    **kwargs:
+        Inserted into the cmscan() call.
+
+    Raises:
+        FileNotFoundError: Riboswitch CM not found.
+    """
+    # Coerce input
+    ver = float(ver)
+
     data_dir_obj = get_datapath_obj()
     switch_cm = data_dir_obj.joinpath(f"riboswitches_{ver}.cm")
-    clanin = data_dir_obj.joinpath(f"rfam_{ver}.clanin")
 
     if not switch_cm.exists():
-        raise ValueError(
+        raise FileNotFoundError(
             f"Riboswitch CM for RFAM {ver} does not exist. Call make_riboswitch_cm({ver})."
-        )
-
-    if not clanin.exists():
-        raise ValueError(
-            f"Clanin file for RFAM {ver} does not exist. Call make_clanin({ver})."
         )
 
     cmscan(
         Path(seq_file),
         Path(out_dir),
         switch_cm,
-        options=["--clanin", clanin, *options],
+        options=[*options],
+        **kwargs,
     )
 
 
@@ -149,8 +181,9 @@ def riboswitch_cmscan(
 @click.option(
     "-o", "--out-dir", required=True, help="Output directory for cmscan output."
 )
+@click.option("--no-stats", is_flag=True, help="Supresses cmscan output to the console")
 @click.argument("total_files", nargs=-1)
-def dafault_scan_for_riboswitches(out_dir, total_files: tuple or list):
+def dafault_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats: bool):
     """Runs input files against the latest (14.9) rfam riboswitch covariance models.
 
     Supports MPI acceleration.
@@ -158,10 +191,15 @@ def dafault_scan_for_riboswitches(out_dir, total_files: tuple or list):
     Args:\n
         out_dir (str): Output directory for cmscan output files.
         total_files (tupleorlist): List or tuple of file paths to pass as cmscan inputs.
+        no_stats (bool): Suppresses cmscan output.
     """
     # MPI setup
     mp_con = BasicMPIContext([*total_files])
     worker_list = mp_con.generate_worker_list()
 
+    print(f"Started {mp_con.size} workers")
+
     for fasta_path in worker_list:
-        riboswitch_cmscan(Path(fasta_path), Path(out_dir))
+        riboswitch_cmscan(
+            seq_file=fasta_path, out_dir=out_dir, rank=mp_con.rank, no_stats=no_stats
+        )

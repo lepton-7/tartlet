@@ -155,7 +155,7 @@ def dafault_scan_for_riboswitches(out_dir, total_files: tuple or list):
 
     Supports MPI acceleration.
 
-    Args:
+    Args:\n
         out_dir (str): Output directory for cmscan output files.
         total_files (tupleorlist): List or tuple of file paths to pass as cmscan inputs.
     """

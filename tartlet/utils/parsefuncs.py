@@ -77,14 +77,23 @@ class Peak:
         )
 
     def compare_ks(self, peak: "Peak", source_arr):
-        this_ends = self.find_absolute_raw_ends(source_arr)
-        peak_ends = peak.find_absolute_raw_ends(source_arr)
+        """Uses the 2-sample KS test to compare fragment end distributions between peaks.
+
+        Args:
+            peak (Peak): Comparison subject peak.
+            source_arr (np.array): Array from which to extract fragment end distributions for self and subject peak.
+
+        Returns:
+            _type_: _description_
+        """
+        this_ends = self.find_absolute_ends(source_arr)
+        peak_ends = peak.find_absolute_ends(source_arr)
 
         return (ks_2samp(this_ends, peak_ends), this_ends, peak_ends, peak.center)
 
-    def find_absolute_raw_ends(self, source_arr):
+    def find_absolute_ends(self, source_arr):
         try:
-            return self.abs_raw_ends
+            return self.abs_ends
 
         except AttributeError:
             left = self.center - int(self.half_width)
@@ -94,8 +103,11 @@ class Peak:
             left = 0 if left < 0 else left
             right = len(source_arr) - 1 if right >= len(source_arr) else right
 
-            self.abs_raw_ends = np.absolute(source_arr[left:right])
-            return self.abs_raw_ends
+            self.abs_ends = np.absolute(source_arr[left:right])
+            return self.abs_ends
+
+    def find_cumulative_coverage_drop(self, readcov, infercov, clipcov):
+        pass
 
 
 def tally_cigar(cigar: str):

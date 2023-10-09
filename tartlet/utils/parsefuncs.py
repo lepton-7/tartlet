@@ -3,7 +3,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from scipy.stats import norm
+from scipy.stats import norm, ks_2samp
 from collections import defaultdict
 from math import ceil, isclose
 
@@ -75,6 +75,27 @@ class Peak:
         return (
             hprop > -1 - heightMarg and hprop < -1 + heightMarg and wdiff <= widthMarg
         )
+
+    def compare_ks(self, peak: "Peak", source_arr):
+        this_ends = self.find_absolute_raw_ends(source_arr)
+        peak_ends = peak.find_absolute_raw_ends(source_arr)
+
+        return (ks_2samp(this_ends, peak_ends), this_ends, peak_ends, peak.center)
+
+    def find_absolute_raw_ends(self, source_arr):
+        try:
+            return self.abs_raw_ends
+
+        except AttributeError:
+            left = self.center - int(self.half_width)
+            right = self.center + int(self.half_width)
+
+            # Validate
+            left = 0 if left < 0 else left
+            right = len(source_arr) - 1 if right >= len(source_arr) else right
+
+            self.abs_raw_ends = np.absolute(source_arr[left:right])
+            return self.abs_raw_ends
 
 
 def tally_cigar(cigar: str):
@@ -378,8 +399,7 @@ def add_to_frags(
 
                 # Validate bounds
                 rclip_end = (
-                    len(frag_array) if rclip_end > len(
-                        frag_array) else rclip_end
+                    len(frag_array) if rclip_end > len(frag_array) else rclip_end
                 )
                 # clipped region to right
                 clipped_regions.append((rend, rclip_end))
@@ -428,8 +448,7 @@ def add_to_frags(
 
                 # Validate bounds
                 rclip_end = (
-                    len(frag_array) if rclip_end > len(
-                        frag_array) else rclip_end
+                    len(frag_array) if rclip_end > len(frag_array) else rclip_end
                 )
                 # clipped region to right
                 clipped_regions.append((rend, rclip_end))
@@ -541,10 +560,8 @@ def generate_plot_data(
 
             # There's no functional difference between "FR" and "EQ" orientations
             elif orientation == "FR" or orientation == "EQ":
-                fProcessed = process_read_ends(
-                    fread, "F", frag_ends, allowSoftClips)
-                rProcessed = process_read_ends(
-                    revread, "R", frag_ends, allowSoftClips)
+                fProcessed = process_read_ends(fread, "F", frag_ends, allowSoftClips)
+                rProcessed = process_read_ends(revread, "R", frag_ends, allowSoftClips)
 
                 if fProcessed and rProcessed:
                     add_to_frags(
@@ -590,7 +607,7 @@ def bin_counts(alignTup: tuple, bin_size: int = 1):
 
         binned_ends[i] = sum(ends[bstart:bend])
 
-    binned_ends[numbins - 1] = sum(ends[bin_pos[numbins - 1]:])
+    binned_ends[numbins - 1] = sum(ends[bin_pos[numbins - 1] :])
 
     return (cov, binned_ends, (switch_start, switch_end)), bin_pos
 
@@ -624,8 +641,7 @@ def plot_gen(
     bin_x = bin_ax if bin_size > 1 else x
 
     # Use reasonable x ticks
-    xticks = bin_ax if bin_size >= 10 else [
-        i for i in range(0, len(readcov), 10)]
+    xticks = bin_ax if bin_size >= 10 else [i for i in range(0, len(readcov), 10)]
 
     fig, ax = plt.subplots(
         2, 1, sharex=True, figsize=(20, 10), dpi=100, constrained_layout=True
@@ -645,12 +661,11 @@ def plot_gen(
     xticks = (
         xticks[buffstart_bin:buffend_bin]
         if bin_size >= 10
-        else xticks[buffstart // 10: ceil(buffend / 10)]
+        else xticks[buffstart // 10 : ceil(buffend / 10)]
     )
 
     # Add the coverage panel ----------------------------------------
-    coverage_counts = {"Read": readcov,
-                       "Inferred": infercov, "Clipped": clipcov}
+    coverage_counts = {"Read": readcov, "Inferred": infercov, "Clipped": clipcov}
     coverage_colours = {
         "Read": "slateblue",
         "Inferred": "crimson",
@@ -815,6 +830,8 @@ def is_interesting(
     for i in range(len(peaks)):
         cand: Peak = peaks[i]
         keepcand = True
+        cand_stats = None
+
         # The candidate is within the window and within the margin of the tallest peak
         if (
             cand.center >= left
@@ -828,13 +845,18 @@ def is_interesting(
                 minDrop=minReadDrop,
             )
         ):
+            cand_stats = []
             # Check if there is a similar mirrored peak
             # anywhere in the region of interest.
             # Only the frag start peaks prior to the candidate
             # frag end peak needs to be checked.
             for peak in peaks[:i]:
+                # If the preceding peak is far out of the read range
+                if peak.center < cand.center - 200:
+                    continue
                 # If there is a mirrored peak within margins,
                 # immediately disqualify
+                cand_stats.append(cand.compare_ks(peak, ends))
                 if cand.compare(
                     peak, heightMarg=peakHeightTol, widthMarg=peakWidthMarg
                 ):
@@ -843,6 +865,6 @@ def is_interesting(
 
             # This candidate does not have a mirrored peak
             if keepcand:
-                return True
+                return (True, cand_stats)
 
-    return False
+    return (False, cand_stats)

@@ -751,10 +751,12 @@ def plot_gen(
     plt.close()
 
 
-def find_peaks(arr):
+def find_peaks(arr, l: int = 0, u: int = -1):
     ret = []
 
-    for i in range(1, len(arr) - 1):
+    u = len(arr) if u < 0 else u
+
+    for i in range(l + 1, u - 1):
         if abs(arr[i]) > abs(arr[i - 1]) and abs(arr[i]) > abs(arr[i + 1]):
             peak = Peak(center=i, height=arr[i])
 

@@ -3,7 +3,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from scipy.stats import norm, ks_2samp
+from scipy.stats import norm, ks_2samp, t
 from collections import defaultdict
 from math import ceil, isclose
 
@@ -904,6 +904,26 @@ def convolve_array(rawends, kernel_size, std_dev):
     ends = np.convolve(rawends, kernel, "same")
 
     return ends
+
+
+def coverage_delta_per_peak(peaks: list, sumcov: list):
+    raw_cov_drop = []
+
+    for peak in peaks:
+        peak: Peak
+        i = peak.center
+        hw = peak.half_width
+
+        l = i - hw
+        r = i + hw
+
+        # Validate bounds
+        l = 0 if l < 0 else l
+        r = len(sumcov) - 1 if r >= len(sumcov) else r
+
+        raw_cov_drop.append(sumcov[r] - sumcov[l])
+
+    return raw_cov_drop
 
 
 def has_interesting_peak_stats(

@@ -1,6 +1,8 @@
 import pysam
 import numpy as np
+import operator
 
+np.random.randint
 import matplotlib.pyplot as plt
 
 from scipy.stats import norm, ks_2samp, t
@@ -9,7 +11,22 @@ from math import ceil, isclose
 
 
 class Peak:
-    def __init__(self, center=None, height=None, half_width=None):
+    def __init__(
+        self,
+        from_switch_end,
+        center=None,
+        height=None,
+        half_width=None,
+        switch_end=None,
+    ):
+        self.from_switch_end = None
+        self.from_switch_end = (
+            center - switch_end if switch_end is not None else self.from_switch_end
+        )
+        self.from_switch_end = (
+            from_switch_end if from_switch_end is not None else self.from_switch_end
+        )
+
         self.center = center
         self.height = height
         self.half_width = half_width
@@ -751,15 +768,14 @@ def plot_gen(
     plt.close()
 
 
-def find_peaks(arr, l: int = 0, u: int = -1):
+def find_peaks(arr, switch_end, l: int = 0, u: int = -1):
     ret = []
 
     u = len(arr) if u < 0 else u
 
     for i in range(l + 1, u - 1):
         if abs(arr[i]) > abs(arr[i - 1]) and abs(arr[i]) > abs(arr[i + 1]):
-            peak = Peak(center=i, height=arr[i])
-
+            peak = Peak(center=i, height=arr[i], switch_end=switch_end)
             if peak.find_half_width(arr):
                 ret.append(peak)
 
@@ -930,6 +946,8 @@ def has_interesting_peak_stats(
     alignTup: tuple,
     kernel_size: int = 51,
     kernel_stdev: int = 5,
+    left_margin=0.2,
+    right_margin=0.2,
 ):
     cov, rawends, (switch_left, switch_right) = alignTup
     readcov, infercov, clipcov = cov
@@ -945,4 +963,15 @@ def has_interesting_peak_stats(
     # so the right end in the reference is still the 3' end
     switch_end = switch_right
 
-    peaks = find_peaks(ends)
+    switch_size = switch_right - switch_left
+    # Set relevant regions to look compare candidates with
+    relevant_l = switch_left - switch_size * left_margin
+    relevant_r = switch_right + switch_size * right_margin
+
+    peaks = find_peaks(ends, switch_end, relevant_l, relevant_r)
+
+    # Sort peaks in order of increasing absolute distance from riboswitch end
+    peaks.sort(key=abs(operator.attrgetter("from_switch_end")))
+    
+    # Record how coverage is changed by identified peaks in the region of interest
+    cov_delta_relevant = coverage_delta_per_peak(peaks, sumcov)

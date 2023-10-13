@@ -971,7 +971,7 @@ def has_interesting_peak_stats(
     peaks = find_peaks(ends, switch_end, relevant_l, relevant_r)
 
     # Sort peaks in order of increasing absolute distance from riboswitch end
-    peaks.sort(key=abs(operator.attrgetter("from_switch_end")))
-    
+    close_peaks = sorted(peaks, key=abs(operator.attrgetter("from_switch_end")))
+
     # Record how coverage is changed by identified peaks in the region of interest
     cov_delta_relevant = coverage_delta_per_peak(peaks, sumcov)

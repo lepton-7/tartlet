@@ -809,7 +809,10 @@ def is_interesting(
     windowfrac: float = 0.15,
     threshtol: float = 0.15,
 ):
-    """Determines whether the read alignment is indicative of transcriptionally active riboswitches.
+    """
+    DEPRECATED
+
+    Determines whether the read alignment is indicative of transcriptionally active riboswitches.
 
     Args:
         alignTup (tuple): Alignment tuple for this reference:
@@ -892,3 +895,32 @@ def is_interesting(
                 return (True, cand_stats)
 
     return (False, cand_stats)
+
+
+def convolve_array(rawends, kernel_size, std_dev):
+    kernel = gen_kernel(kernel_size=kernel_size, std_dev=std_dev)
+    ends = np.convolve(rawends, kernel, "same")
+
+    return ends
+
+
+def has_interesting_peak_stats(
+    alignTup: tuple,
+    kernel_size: int = 51,
+    kernel_stdev: int = 5,
+):
+    cov, rawends, (switch_left, switch_right) = alignTup
+    readcov, infercov, clipcov = cov
+
+    # np.add can ONLY add two arrays.
+    # The third param is the output array obj
+    sumcov = np.add(readcov, infercov)
+    sumcov = np.add(sumcov, clipcov)
+
+    ends = convolve_array(rawends, kernel_size, kernel_stdev)
+
+    # - strand riboswitches are reverse complemented during the reference generation,
+    # so the right end in the reference is still the 3' end
+    switch_end = switch_right
+
+    peaks = find_peaks(ends)

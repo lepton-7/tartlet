@@ -84,7 +84,7 @@ class Peak:
             source_arr (np.array): Array from which to extract fragment end distributions for self and subject peak.
 
         Returns:
-            _type_: _description_
+            tuple: (KS_stats, self ends, peak ends, peak center)
         """
         this_ends = self.find_absolute_ends(source_arr)
         peak_ends = peak.find_absolute_ends(source_arr)
@@ -106,8 +106,20 @@ class Peak:
             self.abs_ends = np.absolute(source_arr[left:right])
             return self.abs_ends
 
-    def find_cumulative_coverage_drop(self, readcov, infercov, clipcov):
-        pass
+    def find_cumulative_coverage_drop(self, sumcov: list) -> int:
+        try:
+            return self.abs_cov_drop
+
+        except AttributeError:
+            left = self.center - int(self.half_width)
+            right = self.center + int(self.half_width)
+
+            # Validate
+            left = 0 if left < 0 else left
+            right = len(sumcov) - 1 if right >= len(sumcov) else right
+
+            self.abs_cov_drop = sumcov[left] - sumcov[right]
+            return self.abs_cov_drop
 
 
 def tally_cigar(cigar: str):

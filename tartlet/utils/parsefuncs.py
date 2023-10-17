@@ -19,6 +19,8 @@ class Peak:
         half_width=None,
         switch_end=None,
     ):
+        self.switch_end = switch_end
+
         self.from_switch_end = None
         self.from_switch_end = (
             center - switch_end if switch_end is not None else self.from_switch_end
@@ -927,19 +929,18 @@ def coverage_delta_per_peak(peaks: list, sumcov: list):
 
     for peak in peaks:
         peak: Peak
-        i = peak.center
-        hw = peak.half_width
-
-        l = i - hw
-        r = i + hw
-
-        # Validate bounds
-        l = 0 if l < 0 else l
-        r = len(sumcov) - 1 if r >= len(sumcov) else r
-
-        raw_cov_drop.append(sumcov[r] - sumcov[l])
+        raw_cov_drop.append(-peak.find_cumulative_coverage_drop(sumcov))
 
     return raw_cov_drop
+
+
+def peak_out_of_cov_delta(sorteddelta: list, i: int) -> bool:
+    # Find coverage drops across peaks without cand
+    cov_nocand = []
+    cov_nocand.extend(sorteddelta[0:i])
+    cov_nocand.extend(sorteddelta[i + 1 :])
+
+    return sorteddelta[i] <= min(cov_nocand) and sorteddelta[i] < 0
 
 
 def has_interesting_peak_stats(
@@ -974,4 +975,13 @@ def has_interesting_peak_stats(
     close_peaks = sorted(peaks, key=abs(operator.attrgetter("from_switch_end")))
 
     # Record how coverage is changed by identified peaks in the region of interest
-    cov_delta_relevant = coverage_delta_per_peak(peaks, sumcov)
+    cov_delta = coverage_delta_per_peak(close_peaks, sumcov)
+
+    for i, cand in enumerate(close_peaks):
+        if peak_out_of_cov_delta(cov_delta, i):
+            return (True, cand)
+
+        else:
+            continue
+
+    return (False, None)

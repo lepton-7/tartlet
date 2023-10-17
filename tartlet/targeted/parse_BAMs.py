@@ -5,7 +5,8 @@ import json, pickle
 from glob import glob
 from pathlib import Path
 from tart.utils.mpi_context import BasicMPIContext
-from tart.utils.parsefuncs import generate_plot_data, plot_gen
+from tart.utils.read_parsing import generate_plot_data
+from tart.utils.activity_inference import plot_gen
 
 
 @click.command()

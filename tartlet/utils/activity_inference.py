@@ -9,6 +9,8 @@ from math import ceil, isclose
 
 
 class Peak:
+    """Handles peaks in convolved data."""
+
     def __init__(
         self,
         from_switch_end,
@@ -32,6 +34,18 @@ class Peak:
         self.half_width = half_width
 
     def find_half_width(self, source_arr):
+        """Find the half-max width of the peak from the source array.
+
+        Args:
+            source_arr (list or array): The source array containing the peak.
+
+        Raises:
+            AttributeError: If the Peak object is not instantiated with the center.
+            AttributeError: If the Peak object is not instantiated with the height.
+
+        Returns:
+            bool: Whether the half-max width was successfully determined.
+        """
         if self.center is None:
             raise AttributeError("Peak center needs to be defined")
 
@@ -86,6 +100,18 @@ class Peak:
         return False
 
     def compare(self, peak: "Peak", heightMarg: float = 0.1, widthMarg: int = 4):
+        """DEPRECATED
+
+        Compares two peaks. Returns true if peaks match within the defined margins.
+
+        Args:
+            peak (Peak): Comparison subject Peak object.
+            heightMarg (float, optional): Proportion of this Peak's margin within which to match peak. Defaults to 0.1.
+            widthMarg (int, optional): Nucleotide margin within which to match peak's width. Defaults to 4.
+
+        Returns:
+            bool: Whether the height and widths of the peak being compared fall wlthin the margins of this peak.
+        """
         hprop = peak.height / self.height
         wdiff = abs(self.half_width - peak.half_width)
 
@@ -109,6 +135,14 @@ class Peak:
         return (ks_2samp(this_ends, peak_ends), this_ends, peak_ends, peak.center)
 
     def find_absolute_ends(self, source_arr):
+        """Finds the distribution of raw, unconvolved ends across the range of the peak.
+
+        Args:
+            source_arr (list or np.array): The unconvolved ends array.
+
+        Returns:
+            list: A slice of the source array covered by the peak center ± half-width.
+        """
         try:
             return self.abs_ends
 
@@ -123,7 +157,12 @@ class Peak:
             self.abs_ends = np.absolute(source_arr[left:right])
             return self.abs_ends
 
-    def find_cumulative_coverage_delta(self, sumcov: list) -> int:
+    def find_absolute_coverage_delta(self, sumcov: list) -> int:
+        """Computes the absolute change in the summed coverage between the start and end of the peak (center ± half-width).
+
+        Returns:
+            int: Absolute change in summed coverage across the peak.
+        """
         try:
             return self.abs_cov_delta
 
@@ -139,13 +178,21 @@ class Peak:
             return self.abs_cov_delta
 
     def find_relative_coverage_delta(self, sumcov: list) -> float:
+        """Computes the change in summed coverage across the peak (center ± half-width) relative to the summed coverage at the lower bound (center - half-width) of the peak.
+
+        Args:
+            sumcov (list): Coverage summed across actual, inferred, and clipped reads per base.
+
+        Returns:
+            float: Change in summed coverage across the peak relative to coverage at the start of the peak.
+        """
         try:
             return self.rel_cov_delta
         except AttributeError:
             l = self.center - int(self.half_width)
             l = 0 if l < 0 else l
 
-            self.rel_cov_delta = self.find_cumulative_coverage_delta(sumcov) / sumcov[l]
+            self.rel_cov_delta = self.find_absolute_coverage_delta(sumcov) / sumcov[l]
             return self.rel_cov_delta
 
 
@@ -170,7 +217,7 @@ class Candidate(Peak):
             half_width=cand.half_width,
         )
 
-        self.abs_cov_delta = cand.find_cumulative_coverage_delta(sumcov)
+        self.abs_cov_delta = cand.find_absolute_coverage_delta(sumcov)
         self.rel_cov_delta = cand.find_relative_coverage_delta(sumcov)
 
         self.switch_size = switch_size
@@ -326,6 +373,18 @@ def plot_gen(
 
 
 def find_peaks(arr, switch_end, l: int = 0, u: int = -1):
+    """Finds peaks in the given convolved array.
+
+    Args:
+        arr (list or np.array): Data array/list convolved with a normal-distr weighted kernel.
+        switch_end (int): Position of the riboswitch end.
+        l (int, optional): Left bound of the region to find peaks in. Defaults to 0.
+        u (int, optional): Right bound of the region to find peaks in. Setting to -1 indicates no bound.
+                            Defaults to -1.
+
+    Returns:
+        list: List of valid Peak objects found within the specified bounds.
+    """
     ret = []
 
     u = len(arr) if u < 0 else u
@@ -360,6 +419,23 @@ def gen_kernel(kernel_size: int = 21, std_dev: float = 3.0):
 def check_cand_drop(
     cov: list, switchreg: tuple, cand: Peak, stdev: int, minDrop: float
 ):
+    """DEPRECATED
+
+    Checks whether coverage drop across (bounds determined by the standard
+    deviation of the convolution kernel used to process the raw ends array)
+    a candidate peak relative to the max coverage value in the riboswitch
+    region is over the given threshold.
+
+    Args:
+        cov (list): Coverage list.
+        switchreg (tuple): Riboswith bounds: (start, end)
+        cand (Peak): Candidate Peak.
+        stdev (int): Ends convolution kernel std dev.
+        minDrop (float): Minimum relative drop threshold.
+
+    Returns:
+        bool: True if relative drop across the Peak exceeds the drop threshold.
+    """
     # np.add can ONLY add two arrays.
     # The third param is the output array obj
     arr = np.add(cov[0], cov[1])
@@ -473,6 +549,16 @@ def is_interesting(
 
 
 def convolve_array(rawends, kernel_size, std_dev):
+    """Helper function that generates and applies the normally-weighted kernal to the raw ends data.
+
+    Args:
+        rawends (list or np.array): The raw, unprocessed ends data array.
+        kernel_size (int): Size of the 1-D convolution kernel. Must be odd?
+        std_dev (float): Standard deviation used to generate the normally-weighted kernel.
+
+    Returns:
+        list: Convolved list of ends.
+    """
     kernel = gen_kernel(kernel_size=kernel_size, std_dev=std_dev)
     ends = np.convolve(rawends, kernel, "same")
 
@@ -480,16 +566,38 @@ def convolve_array(rawends, kernel_size, std_dev):
 
 
 def coverage_delta_per_peak(peaks: list, sumcov: list):
+    """Helper function to find coverage deltas across a list of Peaks.
+
+    Args:
+        peaks (list): List of Peak objects.
+        sumcov (list): Summed coverage list.
+
+    Returns:
+        list: Absolute coverage drop for each peak in the same order as peaks.
+    """
     raw_cov_drop = []
 
     for peak in peaks:
         peak: Peak
-        raw_cov_drop.append(-peak.find_cumulative_coverage_drop(sumcov))
+        raw_cov_drop.append(peak.find_absolute_coverage_delta(sumcov))
 
     return raw_cov_drop
 
 
-def peak_out_of_cov_delta(sorteddelta: list, i: int) -> bool:
+def peak_out_of_cov_delta(sorteddelta: list, i: int) -> (bool, list):
+    """Checks whether the coverage delta of a given element is outside the
+    range of deltas constituted by the rest of the list without the element being tested.
+
+    Args:
+        sorteddelta (list): List of deltas, ideally sorted increasingly by
+                            absolute distance pf the source Peak from the
+                            riboswitch end.
+        i (int): Subject delta index in sorteddelta.
+
+    Returns:
+        tuple: (bool, list) -> boolean is True if the subject coverage delta
+               is negative and the minumum delta in sorteddelta.
+    """
     # Find coverage drops across peaks without cand
     cov_nocand = []
     cov_nocand.extend(sorteddelta[0:i])
@@ -498,7 +606,7 @@ def peak_out_of_cov_delta(sorteddelta: list, i: int) -> bool:
     return (sorteddelta[i] <= min(cov_nocand) and sorteddelta[i] < 0, cov_nocand)
 
 
-def has_interesting_peak_stats(
+def has_candidate_peak(
     alignTup: tuple,
     kernel_size: int = 51,
     kernel_stdev: int = 5,

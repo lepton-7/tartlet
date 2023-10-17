@@ -125,9 +125,9 @@ class Peak:
             self.abs_ends = np.absolute(source_arr[left:right])
             return self.abs_ends
 
-    def find_cumulative_coverage_drop(self, sumcov: list) -> int:
+    def find_cumulative_coverage_delta(self, sumcov: list) -> int:
         try:
-            return self.abs_cov_drop
+            return self.abs_cov_delta
 
         except AttributeError:
             left = self.center - int(self.half_width)
@@ -137,8 +137,48 @@ class Peak:
             left = 0 if left < 0 else left
             right = len(sumcov) - 1 if right >= len(sumcov) else right
 
-            self.abs_cov_drop = sumcov[left] - sumcov[right]
-            return self.abs_cov_drop
+            self.abs_cov_delta = sumcov[right] - sumcov[left]
+            return self.abs_cov_delta
+
+    def find_relative_coverage_delta(self, sumcov: list) -> float:
+        try:
+            return self.rel_cov_delta
+        except AttributeError:
+            l = self.center - int(self.half_width)
+            l = 0 if l < 0 else l
+
+            self.rel_cov_delta = self.find_cumulative_coverage_delta(sumcov) / sumcov[l]
+            return self.rel_cov_delta
+
+
+class Candidate(Peak):
+    """Wraps the relevant information to return as a candidate for transcription termination activity.
+
+    Args:
+        Peak (Peak): Parent class that handles most of the attribute setting.
+    """
+
+    def __init__(
+        self,
+        cand: Peak,
+        switch_size: int,
+        nocand_cov_delta: list,
+        sumcov: list,
+    ) -> None:
+        super().__init__(
+            from_switch_end=cand.from_switch_end,
+            center=cand.center,
+            height=cand.height,
+            half_width=cand.half_width,
+        )
+
+        self.abs_cov_delta = cand.find_cumulative_coverage_delta(sumcov)
+        self.rel_cov_delta = cand.find_relative_coverage_delta(sumcov)
+
+        self.switch_size = switch_size
+        self.from_switch_end_relative = self.from_switch_end / self.switch_size
+
+        self.coverage_delta_noise = nocand_cov_delta
 
 
 def tally_cigar(cigar: str):
@@ -940,15 +980,15 @@ def peak_out_of_cov_delta(sorteddelta: list, i: int) -> bool:
     cov_nocand.extend(sorteddelta[0:i])
     cov_nocand.extend(sorteddelta[i + 1 :])
 
-    return sorteddelta[i] <= min(cov_nocand) and sorteddelta[i] < 0
+    return (sorteddelta[i] <= min(cov_nocand) and sorteddelta[i] < 0, cov_nocand)
 
 
 def has_interesting_peak_stats(
     alignTup: tuple,
     kernel_size: int = 51,
     kernel_stdev: int = 5,
-    left_margin=0.2,
-    right_margin=0.2,
+    left_margin=1.0,
+    right_margin=1.0,
 ):
     cov, rawends, (switch_left, switch_right) = alignTup
     readcov, infercov, clipcov = cov
@@ -963,9 +1003,9 @@ def has_interesting_peak_stats(
     # - strand riboswitches are reverse complemented during the reference generation,
     # so the right end in the reference is still the 3' end
     switch_end = switch_right
-
     switch_size = switch_right - switch_left
-    # Set relevant regions to look compare candidates with
+
+    # Set relevant regions to compare candidates within
     relevant_l = switch_left - switch_size * left_margin
     relevant_r = switch_right + switch_size * right_margin
 
@@ -978,8 +1018,10 @@ def has_interesting_peak_stats(
     cov_delta = coverage_delta_per_peak(close_peaks, sumcov)
 
     for i, cand in enumerate(close_peaks):
-        if peak_out_of_cov_delta(cov_delta, i):
-            return (True, cand)
+        is_sig, nocand_cov_delta = peak_out_of_cov_delta(cov_delta, i)
+        if is_sig:
+            cand_obj = Candidate(cand, switch_size, nocand_cov_delta, sumcov)
+            return (True, cand_obj)
 
         else:
             continue

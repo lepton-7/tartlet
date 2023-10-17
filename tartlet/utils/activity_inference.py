@@ -1,7 +1,6 @@
 import numpy as np
 import operator
 
-np.random.randint
 import matplotlib.pyplot as plt
 
 from scipy.stats import norm, ks_2samp

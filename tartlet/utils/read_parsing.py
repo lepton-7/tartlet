@@ -165,13 +165,14 @@ def process_read_ends(
 ):
     """Adds the tail of a read (the start of read synthesis) to an array
     that counts the number of read termini at each position in the reference.
-    If the terminus is a likely fragment start, the count at its position is decremented.
-    If the terminys is a liekly fragment end, the cout at its position is incremented.
+    If the terminus is likely a fragment start, the count at its position is decremented.
+    If the temrinus is likely a fragment end, the count at its position is incremented.
 
     If the read is in the "F" orientation, the left end of the read is
-    counted as a likely fragment end.
+    counted as a likely fragment start.
 
-    In the case of an "R" read, the right end of the read is counted.
+    In the case of an "R" read, the right end of the read is counted as a likely fragment
+    start.
 
     Args:
         read (pysam.libcalignedsegment.AlignedSegment): An aligned read.
@@ -254,9 +255,9 @@ def add_to_frags(
     clip_array: list,
     allowSoftClips=True,
 ):
-    """Increments elememts in a fragment coverage array that correspond to regions
+    """Increments elements in a fragment coverage array that correspond to regions
         that are likely spanned by a given pair of reads. Also handles the presence of
-        only one mapped read in a pair.
+        singular mapped reads.
 
     Args:
         readtup (tuple): A tuple of reads: (forward read, reverse read).

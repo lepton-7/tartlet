@@ -1,4 +1,5 @@
 *.py[doc]
+__pycache__
 
 *.egg-info
 

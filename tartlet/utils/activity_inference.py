@@ -629,8 +629,8 @@ def has_candidate_peak(
 
     # Set relevant regions to compare candidates within ± switch size
     # proportion outside the switch
-    relevant_l = switch_left - switch_size * left_margin
-    relevant_r = switch_right + switch_size * right_margin
+    relevant_l = switch_left - int(switch_size * left_margin)
+    relevant_r = switch_right + int(switch_size * right_margin)
 
     peaks = find_peaks(ends, switch_end, relevant_l, relevant_r)
 

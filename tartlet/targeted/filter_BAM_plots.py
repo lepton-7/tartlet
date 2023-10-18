@@ -89,7 +89,6 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
         targetname = Path(pick_file).parts[-3]
 
         transcriptome = Path(pick_file).parts[-2]
-        save_path = out_dir.joinpath(passfaildir, f"{transcriptome}#{ref}.png")
 
         # Reset to confirm no carry-over between alignments
         align_charac = {}
@@ -107,6 +106,7 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
         cand: Candidate = has_candidate_peak(alignTup)
         passfaildir = "fail" if cand is None else "pass"
         align_charac["decision"] = passfaildir
+        save_path = out_dir.joinpath(passfaildir, f"{transcriptome}#{ref}.png")
 
         if cand is None:
             align_charac["decision_note"] = "No suitable candidates"

@@ -622,12 +622,13 @@ def has_candidate_peak(
 
     ends = convolve_array(rawends, kernel_size, kernel_stdev)
 
-    # - strand riboswitches are reverse complemented during the reference generation,
-    # so the right end in the reference is still the 3' end
+    # - strand riboswitches are reverse complemented during the reference
+    # generation, so the right end in the reference is still the 3' end
     switch_end = switch_right
     switch_size = switch_right - switch_left
 
-    # Set relevant regions to compare candidates within
+    # Set relevant regions to compare candidates within ± switch size
+    # proportion outside the switch
     relevant_l = switch_left - switch_size * left_margin
     relevant_r = switch_right + switch_size * right_margin
 

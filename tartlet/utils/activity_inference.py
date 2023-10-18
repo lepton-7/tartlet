@@ -12,7 +12,7 @@ class Peak:
 
     def __init__(
         self,
-        from_switch_end,
+        from_switch_end=None,
         center=None,
         height=None,
         half_width=None,

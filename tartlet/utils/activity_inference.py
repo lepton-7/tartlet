@@ -28,6 +28,9 @@ class Peak:
             from_switch_end if from_switch_end is not None else self.from_switch_end
         )
 
+        # Only really used when sorting in one downstream step
+        self.abs_from_switch_end = abs(self.from_switch_end)
+
         self.center = center
         self.height = height
         self.half_width = half_width
@@ -635,7 +638,7 @@ def has_candidate_peak(
     peaks = find_peaks(ends, switch_end, relevant_l, relevant_r)
 
     # Sort peaks in order of increasing absolute distance from riboswitch end
-    close_peaks = sorted(peaks, key=abs(operator.attrgetter("from_switch_end")))
+    close_peaks = sorted(peaks, key=operator.attrgetter("abs_from_switch_end"))
 
     # Record how coverage is changed by identified peaks in the region of interest
     cov_delta = coverage_delta_per_peak(close_peaks, sumcov)

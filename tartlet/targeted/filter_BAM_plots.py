@@ -18,7 +18,7 @@ from tart.utils.activity_inference import Candidate
 def log_cand_charac(align_charac: dict, cand: Candidate):
     align_charac["coverage_delta"] = cand.abs_cov_delta
     align_charac["coverage_delta_relative"] = cand.rel_cov_delta
-    align_charac["negative_delta_noiseset"] = str(cand.coverage_delta_noise)
+    align_charac["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)
 
     align_charac["from_riboswith_end"] = cand.from_switch_end
     align_charac["from_riboswith_end_relative"] = cand.from_switch_end_relative
@@ -129,6 +129,7 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
 
         # Extract candidate characteristics and organise in-place
         log_cand_charac(align_charac, cand)
+        charac_local.append(align_charac)
 
         save_path.parent.mkdir(exist_ok=True, parents=True)
 

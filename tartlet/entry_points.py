@@ -26,7 +26,7 @@ def utils():
 
 
 targeted.add_command(align_reads.main, name="align")
-targeted.add_command(filter_BAM_plots.main, name="filter")
+targeted.add_command(filter_BAM_plots.exec_main, name="filter")
 targeted.add_command(make_BAMs.main, name="convert-sam")
 targeted.add_command(make_indexes.main, name="index")
 targeted.add_command(make_reference_sequences.main, name="reference-gen")

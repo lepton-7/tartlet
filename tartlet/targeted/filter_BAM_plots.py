@@ -40,6 +40,17 @@ from tart.utils.activity_inference import Candidate
     show_default=True,
     help="Maximum read coverage (not inferred or clipped coverage) within the riboswitch region must be equal or greater than the specified threshold to proceed with pass/fail classification and include the alignment in the pass rate calculations.",
 )
+@click.option(
+    "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
+)
+def exec_main(pick_root, out_dir, bin_size, min_cov_depth, run_depr):
+    if run_depr:
+        depr_main(pick_root, out_dir, bin_size)
+
+    else:
+        main(pick_root, out_dir, bin_size, min_cov_depth)
+
+
 def main(pick_root, out_dir, bin_size, min_cov_depth):
     # Determine MPI context
     mp_con = BasicMPIContext()
@@ -122,7 +133,6 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
             characteristics.extend(instance_arr)
 
         # Make dataframe
-
         # df = pd.DataFrame({"target_name": classes, "pass_rate": rates})
         # df.to_csv(f"{out_dir}/pass_rates.csv", index=False)
         df = pd.DataFrame(characteristics)

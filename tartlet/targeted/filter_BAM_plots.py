@@ -15,6 +15,15 @@ from tart.utils.activity_inference import (
 from tart.utils.activity_inference import Candidate
 
 
+def log_cand_charac(align_charac: dict, cand: Candidate):
+    align_charac["coverage_delta"] = cand.abs_cov_delta
+    align_charac["coverage_delta_relative"] = cand.rel_cov_delta
+    align_charac["negative_delta_noiseset"] = str(cand.coverage_delta_noise)
+
+    align_charac["from_riboswith_end"] = cand.from_switch_end
+    align_charac["from_riboswith_end_relative"] = cand.from_switch_end_relative
+
+
 @click.command()
 @click.option(
     "-i",
@@ -43,6 +52,11 @@ from tart.utils.activity_inference import Candidate
 @click.option(
     "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
 )
+#
+#
+# Add multi-val option to set candidate search region bounds
+#
+#
 def exec_main(pick_root, out_dir, bin_size, min_cov_depth, run_depr):
     if run_depr:
         depr_main(pick_root, out_dir, bin_size)
@@ -112,6 +126,9 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
             align_charac["decision_note"] = "No suitable candidates"
             charac_local.append(align_charac)
             continue
+
+        # Extract candidate characteristics and organise in-place
+        log_cand_charac(align_charac, cand)
 
         save_path.parent.mkdir(exist_ok=True, parents=True)
 

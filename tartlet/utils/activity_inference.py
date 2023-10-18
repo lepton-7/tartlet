@@ -583,7 +583,7 @@ def coverage_delta_per_peak(peaks: list, sumcov: list):
     return raw_cov_drop
 
 
-def peak_out_of_cov_delta(sorteddelta: list, i: int) -> (bool, list):
+def peak_out_of_cov_delta(sorteddelta: list, i: int):
     """Checks whether the coverage delta of a given element is outside the
     range of deltas constituted by the rest of the list without the element being tested.
 
@@ -643,9 +643,9 @@ def has_candidate_peak(
         is_sig, nocand_cov_delta = peak_out_of_cov_delta(cov_delta, i)
         if is_sig:
             cand_obj = Candidate(cand, switch_size, nocand_cov_delta, sumcov)
-            return (True, cand_obj)
+            return cand_obj
 
         else:
             continue
 
-    return (False, None)
+    return None

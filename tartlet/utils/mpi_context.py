@@ -7,7 +7,7 @@ try:
     no_mpi4py = False
 
 except ImportError:
-    click.echo("Mpi4py not found. Starting single-instance context")
+    click.echo("Mpi4py not found. Starting single-instance context.")
     no_mpi4py = True
 
 

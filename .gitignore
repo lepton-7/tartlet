@@ -22,3 +22,5 @@ validation/rna_seq/s_spcc6803/*
 validation/rna_seq/s_coelicolor/*
 
 validation/alignment/outputs/**/switch_seqs_delta*
+
+**/.vscode

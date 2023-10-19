@@ -1,25 +1,188 @@
 import pysam
 import numpy as np
 
-np.random.randint
-
 from collections import defaultdict
 
 
+class SortedBAM:
+    """Wrapper around a sorted BAM file to abstract away feature extraction"""
+
+    def __init__(self, bam_path: str) -> None:
+        self.bam: pysam.AlignmentFile = pysam.AlignmentFile(bam_path, "rb")
+        self._set_reference_list()
+
+    def _set_reference_list(self):
+        """Make a list of references in this sorted BAM; only considering references with aligned reads"""
+        self.ref_list = [
+            idxstats.contig
+            for idxstats in self.bam.get_index_statistics()
+            if idxstats.total > 0
+        ]
+
+
 class Read:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, read: pysam.AlignedSegment) -> None:
+        self._read = read
+
+        self.cigarstring = read.cigarstring
+        self.cigarlist = self._split_cigar()
+        self.cigartally = self._tally_cigar()
+
+        self.orientation = "R" if read.is_reverse else "F"
+
+        self.ref_start: int = read.reference_start
+        if read.reference_end is not None:
+            self.ref_end: int = read.reference_end
+
+    def _split_cigar(self):
+        """Turns the read CIGAR string into a list by separating between numbers and CIGAR opcodes.
+
+        Returns:
+            list: list representation of the CIGAR string
+        """
+        cig_list = []
+
+        options = {
+            "M": "M",
+            "I": "I",
+            "D": "D",
+            "N": "N",
+            "S": "S",
+            "H": "H",
+            "P": "P",
+            "=": "=",
+            "X": "X",
+        }
+
+        top = 0
+        for i in range(len(self.cigarstring)):
+            val = self.cigarstring[top:i]
+
+            try:
+                letter = options[self.cigarstring[i]]
+                cig_list.append(int(val))
+                cig_list.append(letter)
+                top = i + 1
+
+            except KeyError:
+                pass  # Haven't hit a letter yet
+
+        return cig_list
+
+    def _tally_cigar(self):
+        """Returns a dict with a tally of CIGAR markers.
+
+        Returns:
+            dict: Dictionary keyed by CIGAR opcodes storing tallies for the read
+        """
+
+        tally_dict = {
+            "M": 0,
+            "I": 0,
+            "D": 0,
+            "N": 0,
+            "S": 0,
+            "H": 0,
+            "P": 0,
+            "=": 0,
+            "X": 0,
+        }
+
+        top = 0
+        for i in range(len(self.cigarstring)):
+            val = self.cigarstring[top:i]
+
+            try:
+                tally_dict[self.cigarstring[i]] = tally_dict[self.cigarstring[i]] + int(
+                    val
+                )
+                top = i + 1
+
+            except KeyError:
+                pass  # Haven't hit a letter yet
+
+        return tally_dict
 
 
 class ReadPair:
-    def __init__(self) -> None:
-        pass
+    def __init__(self, *reads: Read) -> None:
+        self.num_in_pair = len(reads)
+        self.reads = reads
+
+        self._compute_pair_orientation()
+
+    def _compute_pair_orientation(self):
+        """Computes read pair orientation based on the ALIGNED segments
+        without considering soft clipped ends. Assumes sequencing context is paired-end.
+
+        In the case of a fully mapped pair, "TANDEM" denotes the errant orientation where paired reads aligned
+        in the same direction.
+
+        "EQ" denotes reads aligned in opposite directions but overlapped across
+        terminal base alignments.
+
+        "FR" denotes that the left-most aligned
+        base belongs to the forward aligned read and "RF" denotes that the
+        left-most aligned base belongs to the reverse aligned read.
+
+        "FFR" is an errant orientation denoting that the reverse read is fully
+        aligned within the aligned termini of the forward read. Similarly,
+        "RRF" is the errant orientation denoting that the forward read is fully
+        aligned within the aligned termini of the reverse read.
+
+        In the case of single reads with unmapped mates, determines whether it is oriented
+        in the forward (F) or reverse (R) direction relative to the reference sequence.
+        """
+
+        if self.num_in_pair == 2:  # Is the full pair mapped?
+            # Check if the reads are tandem
+            if self.reads[0].orientation == self.reads[1].orientation:
+                self.f, self.r = None, None
+                self.orientation = "TANDEM"
+                return
+
+            # Do the reads in this pair fully overlap at the terminal aligned?
+            if (
+                self.reads[0].ref_start == self.reads[1].ref_start
+                and self.reads[0].ref_end == self.reads[1].ref_end
+            ):
+                self.f, self.r = self.reads
+                self.orientation = "EQ"
+                return
+
+            else:
+                self.f = (
+                    self.reads[0] if self.reads[0].orientation is "F" else self.reads[1]
+                )
+                self.r = (
+                    self.reads[0] if self.reads[0].orientation is "R" else self.reads[1]
+                )
+
+                self.orientation = (
+                    "FR" if self.f.ref_start <= self.r.ref_start else "RF"
+                )
+
+                # Check the case where r is exclusively within f alignment
+                if self.orientation is "FR" and self.r.ref_end < self.f.ref_end:
+                    self.orientation = "FFR"
+
+                elif self.orientation is "RF" and self.f.ref_end <= self.r.ref_end:
+                    self.orientation = "RRF"
+
+        elif self.num_in_pair == 1:
+            self.orientation = self.reads[0].orientation
+
+            self.f = self.reads[0] if self.orientation is "F" else None
+            self.r = self.reads[0] if self.orientation is "R" else None
+
+        else:
+            raise ValueError("More than two reads cannot be processed as a pair.")
 
 
 class AlignDat:
     """
     Organises all the necessary alignment data required to infer riboswitch
-    transcriptional activity.
+    transcriptional activity for one reference in one sorted BAM.
     """
 
     def __init__(
@@ -52,81 +215,6 @@ class AlignDat:
         )
 
 
-def tally_cigar(cigar: str):
-    """Returns a dict with a tally for CIGAR markers from a string
-
-    Args:
-        cigar (str): CIGAR string for a read
-
-    Returns:
-        dict: Dictionary keyed by CIGAR opcodes storing tallies for the read
-    """
-
-    tally_dict = {
-        "M": 0,
-        "I": 0,
-        "D": 0,
-        "N": 0,
-        "S": 0,
-        "H": 0,
-        "P": 0,
-        "=": 0,
-        "X": 0,
-    }
-
-    top = 0
-    for i in range(len(cigar)):
-        val = cigar[top:i]
-
-        try:
-            tally_dict[cigar[i]] = tally_dict[cigar[i]] + int(val)
-            top = i + 1
-
-        except KeyError:
-            pass  # Haven't hit a letter yet
-
-    return tally_dict
-
-
-def split_cigar(cigar: str):
-    """Turns a CIGAR string into a list by separating between numbers and CIGAR opcodes.
-
-    Args:
-        cigar (str): CIGAR string for a read
-
-    Returns:
-        list: list representation of the CIGAR string
-    """
-    cig_list = []
-
-    options = {
-        "M": "M",
-        "I": "I",
-        "D": "D",
-        "N": "N",
-        "S": "S",
-        "H": "H",
-        "P": "P",
-        "=": "=",
-        "X": "X",
-    }
-
-    top = 0
-    for i in range(len(cigar)):
-        val = cigar[top:i]
-
-        try:
-            letter = options[cigar[i]]
-            cig_list.append(int(val))
-            cig_list.append(letter)
-            top = i + 1
-
-        except KeyError:
-            pass  # Haven't hit a letter yet
-
-    return cig_list
-
-
 def make_pair_dict(bam: pysam.AlignmentFile, refname: str):
     """Fetches reads for a contig (refname) and groups them into pairs based read name
 
@@ -142,65 +230,6 @@ def make_pair_dict(bam: pysam.AlignmentFile, refname: str):
         pair_dict[read.query_name].append(read)
 
     return pair_dict
-
-
-def paired_reads_orientation(pair: list):
-    """Computes the orientation of a given read pair based on the ALIGNED segments
-    without considering soft clipped ends.
-
-    In the case of single reads, determines whether it is oriented in the forward (F)
-    or reverse (R) direction relative to the reference sequence.
-
-    In the case of a pair of reads, "FR" denotes that the left-most read is forward
-    aligned and "RF" denotes that the left-most read is reverse aligned.
-
-    "EQ" is returned if the reads align in opposite directions but the start and ends
-    overlap with each other.
-
-    "TANDEM" denotes a pair that is aligned in the same direction.
-
-    Args:
-        pair (list): A list of reads in a pair. List should have a length of 2.
-
-    Returns:
-        tuple: (no. reads in pair, orientation, f_read, r_read). f_read or r_read is None if that
-        orientation is not present in the pair. Both are None if orientation is "TANDEM"
-    """
-    num = len(pair)
-    orientation = ""
-    fread = None
-    revread = None
-
-    if len(pair) > 1:  # Is the full pair mapped?
-        # Check if the reads are tandem
-        if pair[0].is_reverse == pair[1].is_reverse:
-            return (num, "TANDEM", None, None)
-
-        # Do the reads in this pair fully overlap?
-        if (
-            pair[0].reference_start == pair[1].reference_start
-            and pair[0].reference_end == pair[1].reference_end
-        ):
-            orientation = "EQ"
-            fread = pair[0]
-            revread = pair[1]
-
-        else:
-            fread = pair[0] if not pair[0].is_reverse else pair[1]
-            revread = pair[0] if pair[0].is_reverse else pair[1]
-
-            orientation = (
-                "FR" if fread.reference_start <= revread.reference_start else "RF"
-            )
-
-    else:  # just one read in this pair
-        if pair[0].is_reverse:
-            return (num, "R", None, pair[0])
-
-        if not pair[0].is_reverse:
-            return (num, "F", pair[0], None)
-
-    return (num, orientation, fread, revread)
 
 
 def process_read_ends(

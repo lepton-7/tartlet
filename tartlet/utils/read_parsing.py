@@ -6,6 +6,52 @@ np.random.randint
 from collections import defaultdict
 
 
+class Read:
+    def __init__(self) -> None:
+        pass
+
+
+class ReadPair:
+    def __init__(self) -> None:
+        pass
+
+
+class AlignDat:
+    """
+    Organises all the necessary alignment data required to infer riboswitch
+    transcriptional activity.
+    """
+
+    def __init__(
+        self,
+        readcov: np.ndarray,
+        infercov: np.ndarray,
+        clipcov: np.ndarray,
+        rawends: np.ndarray,
+    ) -> None:
+        self.readcov = readcov
+        self.infercov = infercov
+        self.clipcov = clipcov
+        self.rawends = rawends
+
+    @classmethod
+    def base_init(cls, ref_length: int) -> "AlignDat":
+        """Initialise an empty AlignDat object from reference length.
+
+        Args:
+            ref_length (int): Size of the reference in base pairs.
+
+        Returns:
+            AlignDat: Object with empty coverage and ends arrays initialised.
+        """
+        return cls(
+            np.zeros(ref_length),
+            np.zeros(ref_length),
+            np.zeros(ref_length),
+            np.zeros(ref_length),
+        )
+
+
 def tally_cigar(cigar: str):
     """Returns a dict with a tally for CIGAR markers from a string
 
@@ -399,7 +445,7 @@ def generate_plot_data(
     outDict = {}
     # Iterate over each reference in the bam
     for idxstats in bam.get_index_statistics():
-        # Only continue if there are aligned reads to this reference
+        # Only proceed if there are aligned reads to this reference
         if idxstats.total == 0:
             continue
 
@@ -418,6 +464,7 @@ def generate_plot_data(
             switch_start = int(splits[-2]) - bounds[0]
             switch_end = int(splits[-3]) - bounds[0]
 
+        outDat = AlignDat.base_init(ref_length)
         frag_readcoverage = np.zeros(ref_length)
         frag_infercoverage = np.zeros(ref_length)
         frag_clipcoverage = np.zeros(ref_length)

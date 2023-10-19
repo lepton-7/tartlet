@@ -263,7 +263,8 @@ def plot_gen(
     ref: str,
     alignTup: tuple,
     save_path: str,
-    buff: int = 40,
+    lbuff: int = 40,
+    rbuff: int = 40,
     bin_size: int = 1,
     bin_ax=None,
 ):
@@ -274,7 +275,8 @@ def plot_gen(
         alignTup (tuple): Alignment tuple with the read coverage, inferred frag coverage,
             clipped coverage, fragment ends, and switch start and end
         save_path (str): Full save path for the plot
-        buff (int, optional): Buffer around the riboswitch to show in the plot. Defaults to 40.
+        lbuff (int, optional): Bases preceding the 5' end of the riboswitch to include in the plot. Defaults to 40.
+        rbuff (int, optional): Bases succeeding the 3' end of the riboswitch to include in the plot. Defaults to 40.
     """
     # The bin start (inclusive) values
     if bin_size > 1 and bin_ax is None:
@@ -283,8 +285,8 @@ def plot_gen(
     cov, frag_ends, (start, end) = alignTup
     readcov, infercov, clipcov = cov
 
+    # Handle case where bin size is 1nt
     x = [i for i in range(len(readcov))]
-
     bin_x = bin_ax if bin_size > 1 else x
 
     # Use reasonable x ticks
@@ -296,10 +298,10 @@ def plot_gen(
 
     fig.suptitle(f"{ref}")
 
-    buffstart = start - buff
+    buffstart = start - lbuff
     buffstart = 0 if buffstart < 0 else buffstart
 
-    buffend = end + buff
+    buffend = end + rbuff
 
     buffstart_bin = buffstart // bin_size
     buffend_bin = ceil(buffend / bin_size)

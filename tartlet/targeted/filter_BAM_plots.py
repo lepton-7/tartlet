@@ -52,11 +52,17 @@ def log_cand_charac(align_charac: dict, cand: Candidate):
 @click.option(
     "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
 )
-#
-#
-# Add multi-val option to set candidate search region bounds
-#
-#
+
+@click.option(
+    "--ext-prop",
+    nargs=2,
+    default=(1.0, 1.0),
+    show_defaults=True,
+    help="Riboswitch size proportion outside the riboswitch region to include in the space searched for candidate peaks. \
+        \
+        For a 100bp riboswitch, passing 0.2 0.6 sets the search space from 20bp preceeding the riboswitch 5' end to 60bp beyond the riboswitch 3' end. \
+        Similarly, passing -0.2 -0.6 sets the search space as 20bp into the 5' end and 60bp from the 3' end.",
+)
 def exec_main(pick_root, out_dir, bin_size, min_cov_depth, run_depr):
     if run_depr:
         depr_main(pick_root, out_dir, bin_size)

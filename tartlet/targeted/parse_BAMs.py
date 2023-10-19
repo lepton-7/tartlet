@@ -97,7 +97,7 @@ def main(bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles):
 
             if outPlots and max(readcov[start:end]) >= min_coverage:
                 save_path = save_dir.joinpath(f"{ref}.png")
-                plot_gen(ref, alignTup, save_path, buff=40)
+                plot_gen(ref, alignTup, str(save_path), lbuff=40, rbuff=40)
 
             if outPickles and max(readcov[start:end]) >= min_coverage:
                 save_path = save_dir.joinpath(f"{ref}.p")

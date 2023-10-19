@@ -52,26 +52,25 @@ def log_cand_charac(align_charac: dict, cand: Candidate):
 @click.option(
     "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
 )
-
 @click.option(
     "--ext-prop",
     nargs=2,
     default=(1.0, 1.0),
-    show_defaults=True,
+    show_default=True,
     help="Riboswitch size proportion outside the riboswitch region to include in the space searched for candidate peaks. \
         \
         For a 100bp riboswitch, passing 0.2 0.6 sets the search space from 20bp preceeding the riboswitch 5' end to 60bp beyond the riboswitch 3' end. \
         Similarly, passing -0.2 -0.6 sets the search space as 20bp into the 5' end and 60bp from the 3' end.",
 )
-def exec_main(pick_root, out_dir, bin_size, min_cov_depth, run_depr):
+def exec_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, run_depr):
     if run_depr:
         depr_main(pick_root, out_dir, bin_size)
 
     else:
-        main(pick_root, out_dir, bin_size, min_cov_depth)
+        main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop)
 
 
-def main(pick_root, out_dir, bin_size, min_cov_depth):
+def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
     # Determine MPI context
     mp_con = BasicMPIContext()
     comm = mp_con.comm
@@ -102,6 +101,7 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
             cov, ends, (switch_start, switch_end) = pickle.load(f)
             readcov, infercov, clipcov = cov
 
+        switch_size = switch_end - switch_start
         alignTup = (cov, ends, (switch_start, switch_end))
 
         # Save path formation and sample/ref IDs
@@ -123,7 +123,10 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
             charac_local.append(align_charac)
             continue
 
-        cand: Candidate = has_candidate_peak(alignTup)
+        lmarg, rmarg = ext_prop
+        cand: Candidate = has_candidate_peak(
+            alignTup, left_margin=lmarg, right_margin=rmarg
+        )
         passfaildir = "fail" if cand is None else "pass"
         align_charac["decision"] = passfaildir
         save_path = out_dir.joinpath(passfaildir, f"{transcriptome}#{ref}.png")
@@ -141,13 +144,18 @@ def main(pick_root, out_dir, bin_size, min_cov_depth):
 
         alignTup, bin_ax = bin_counts(alignTup, bin_size=bin_size)
 
-        # plot_gen(
-        #     ref,
-        #     alignTup,
-        #     str(save_path),
-        #     bin_size=bin_size,
-        #     bin_ax=bin_ax,
-        # )
+        lbuff = int(switch_size * lmarg)
+        rbuff = int(switch_size * rmarg)
+
+        plot_gen(
+            ref,
+            alignTup,
+            str(save_path),
+            bin_size=bin_size,
+            bin_ax=bin_ax,
+            lbuff=lbuff,
+            rbuff=rbuff,
+        )
 
     charac_local_arr = comm.gather(charac_local, root=0)
 

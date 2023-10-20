@@ -213,6 +213,7 @@ class AlignDat:
         self.readcov = np.zeros(reflength)
         self.infercov = np.zeros(reflength)
         self.clipcov = np.zeros(reflength)
+
         self.rawends = np.zeros(reflength)
 
         self._set_refrelative_switch_bounds(refbounds)
@@ -456,6 +457,11 @@ class AlignDat:
             self._coalesce_into_cov(pair, self.allowSoftClips)
 
         return self
+
+    def sum_cov(self):
+        """Sum the coverage arrays into an attribute."""
+        self.summedcov = np.add(self.readcov, self.infercov)
+        self.summedcov = np.add(self.summedcov, self.clipcov)
 
 
 class SortedBAM:

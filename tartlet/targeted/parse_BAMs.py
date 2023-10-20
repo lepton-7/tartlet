@@ -1,12 +1,11 @@
-import pysam
 import click
-import json, pickle
+import pickle
 
 from glob import glob
 from pathlib import Path
-from tart.utils.mpi_context import BasicMPIContext
-from tart.utils.read_parsing import generate_plot_data
+from tart.utils.read_parsing import SortedBAM
 from tart.utils.activity_inference import plot_gen
+from tart.utils.mpi_context import BasicMPIContext
 
 
 @click.command()
@@ -31,7 +30,7 @@ from tart.utils.activity_inference import plot_gen
     "--min-coverage",
     default=8,
     show_default=True,
-    help="Minimum converage threshold (in reads). Coverage for at least one position across the reference must be above the value specified, otherwise output is not generated for this alignment.",
+    help="Minimum converage threshold (in reads). Coverage for at least one position across the reference must be above the value specified, otherwise alignment output is not generated.",
 )
 @click.option(
     "--plots",
@@ -45,22 +44,15 @@ from tart.utils.activity_inference import plot_gen
     is_flag=True,
     help="Save outputs as binary pickles.",
 )
-def main(bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles):
-    # bam_dir = argv[1]
-
-    # out_dir = Path(argv[2])
+@click.option(
+    "--allow-soft-clips",
+    is_flag=True,
+    help="Consider the start/end of the soft clipped regions when determining where the likely fragment ends are from reads. If not set, only consider the aligned portions of the reads regardless of any soft clipped regions extending beyond.",
+)
+def main(
+    bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles, allow_soft_clips
+):
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    # Set these to determine outputs ----------------------------------------------
-    # min_coverage = 8
-
-    # outPlots = False
-    # outPickles = True
-    # -----------------------------------------------------------------------------
-
-    # Import the dict that stores MAG contig positions of the alignment references
-    with open(f"{bounds_file}", "r") as f:
-        refBounds = json.load(f)
 
     # List of all sorted BAMS to process
     total_files = glob(f"{bam_dir}/**/*.sorted.bam")
@@ -70,7 +62,7 @@ def main(bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles):
     worker_list = mp_con.generate_worker_list()
 
     for bam_path in worker_list:
-        bam = pysam.AlignmentFile(bam_path, "rb")
+        bam_wrap = SortedBAM(bam_path, bounds_file)
 
         # This looks something like this:
         # /users/PDS0325/sachitk26/ribo_acclim/metatranscriptomics/
@@ -89,17 +81,14 @@ def main(bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles):
         # Make sure the directory exists; create if not.
         save_dir.mkdir(parents=True, exist_ok=True)
 
-        outDict = generate_plot_data(bam, refBounds)
+        alignDat_arr = bam_wrap.generate_ref_alignment_data(allow_soft_clips)
 
-        for ref, alignTup in outDict.items():
-            start, end = alignTup[2][0], alignTup[2][1]
-            readcov = alignTup[0][0]
+        for alignDat in alignDat_arr:
+            if outPlots and alignDat.is_coverage_threshold("read", min_coverage):
+                save_path = save_dir.joinpath(f"{alignDat.ref}.png")
+                # plot_gen(alignDat.ref, alignDat, str(save_path), lbuff=40, rbuff=40)
 
-            if outPlots and max(readcov[start:end]) >= min_coverage:
-                save_path = save_dir.joinpath(f"{ref}.png")
-                plot_gen(ref, alignTup, str(save_path), lbuff=40, rbuff=40)
-
-            if outPickles and max(readcov[start:end]) >= min_coverage:
-                save_path = save_dir.joinpath(f"{ref}.p")
+            if outPickles and alignDat.is_coverage_threshold("read", min_coverage):
+                save_path = save_dir.joinpath(f"{alignDat.ref}.p")
                 with open(save_path, "wb") as f:
-                    pickle.dump(alignTup, f)
+                    pickle.dump(alignDat, f)

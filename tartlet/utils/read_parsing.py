@@ -456,6 +456,7 @@ class AlignDat:
 
             self._coalesce_into_cov(pair, self.allowSoftClips)
 
+        self.sum_cov()
         return self
 
     def sum_cov(self):
@@ -474,9 +475,8 @@ class AlignDat:
         }
 
         # Set default values
-        if l is None or r is None:
-            l = self.switch_start
-            r = self.switch_end
+        l = self.switch_start if l is None else l
+        r = self.switch_end if r is None else r
 
         return max(covpicker[covtype][l:r]) >= thresh
 

@@ -463,6 +463,23 @@ class AlignDat:
         self.summedcov = np.add(self.readcov, self.infercov)
         self.summedcov = np.add(self.summedcov, self.clipcov)
 
+    def is_coverage_threshold(
+        self, covtype: str, thresh: int, l: int = None, r: int = None
+    ):
+        covpicker = {
+            "read": self.readcov,
+            "inferred": self.infercov,
+            "clipped": self.clipcov,
+            "summed": self.summedcov,
+        }
+
+        # Set default values
+        if l is None or r is None:
+            l = self.switch_start
+            r = self.switch_end
+
+        return max(covpicker[covtype][l:r]) >= thresh
+
 
 class SortedBAM:
     """Wrapper around a sorted BAM file to abstract away feature extraction"""

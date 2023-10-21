@@ -201,22 +201,15 @@ def depr_main(pick_root, out_dir, bin_size):
 
     for pick_file in worker_list:
         with open(pick_file, "rb") as f:
-            # ([read cov, inferred frag cov, clipped cov], ends, (swtch start, end))
-            cov, ends, (switch_start, switch_end) = pickle.load(f)
-            readcov, infercov, clipcov = cov
-
-        # conv_ends = np.convolve(ends, kernel, "same")
-
-        # convalignTup = (cov, conv_ends, (switch_start, switch_end))
-        alignTup = (cov, ends, (switch_start, switch_end))
+            alignDat: AlignDat = pickle.load(f)
 
         # Check whether there are enough reads to proceed.
         # This needs to be done to avoid clutter in the results
         # that failed the filer
-        if max(readcov) < 50:
+        if max(alignDat.readcov) < 50:
             continue
 
-        isActive = is_interesting(alignTup, windowfrac=0.2, threshtol=0.2)
+        isActive = is_interesting(alignDat, windowfrac=0.2, threshtol=0.2)
         passfaildir = "pass" if isActive else "fail"
 
         # Save path formation
@@ -233,15 +226,15 @@ def depr_main(pick_root, out_dir, bin_size):
 
         save_path.parent.mkdir(exist_ok=True, parents=True)
 
-        alignTup, bin_ax = bin_counts(alignTup, bin_size=bin_size)
+        alignDat.bin_rawends(bin_size=bin_size)
 
-        plot_gen(
-            ref,
-            alignTup,
-            str(save_path),
-            bin_size=bin_size,
-            bin_ax=bin_ax,
-        )
+        # plot_gen(
+        #     ref,
+        #     alignTup,
+        #     str(save_path),
+        #     bin_size=bin_size,
+        #     bin_ax=bin_ax,
+        # )
 
     charac_local_arr = comm.gather(pass_rate_local, root=0)
 

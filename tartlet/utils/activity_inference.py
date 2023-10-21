@@ -391,7 +391,7 @@ def _gen_kernel(kernel_size: int = 21, std_dev: float = 3.0):
 
 
 def check_cand_drop(
-    cov: list, switchreg: tuple, cand: Peak, stdev: int, minDrop: float
+    summedcov: list, switchreg: tuple, cand: Peak, stdev: int, minDrop: float
 ):
     """DEPRECATED
 
@@ -410,10 +410,6 @@ def check_cand_drop(
     Returns:
         bool: True if relative drop across the Peak exceeds the drop threshold.
     """
-    # np.add can ONLY add two arrays.
-    # The third param is the output array obj
-    arr = np.add(cov[0], cov[1])
-    arr = np.add(arr, cov[2])
 
     sstart, send = switchreg
 
@@ -421,16 +417,16 @@ def check_cand_drop(
     istart, iend = cand.center - interv, cand.center + interv
 
     istart = 0 if istart < 0 else istart
-    iend = len(arr) - 1 if iend >= len(arr) else iend
+    iend = len(summedcov) - 1 if iend >= len(summedcov) else iend
 
-    diff = arr[istart] - arr[iend]
-    maxreads = max(arr[sstart:send])
+    diff = summedcov[istart] - summedcov[iend]
+    maxreads = max(summedcov[sstart:send])
 
     return diff / maxreads > minDrop
 
 
 def is_interesting(
-    alignTup: tuple,
+    alignDat: AlignDat,
     windowfrac: float = 0.15,
     threshtol: float = 0.15,
 ):
@@ -440,7 +436,7 @@ def is_interesting(
     Determines whether the read alignment is indicative of transcriptionally active riboswitches.
 
     Args:
-        alignTup (tuple): Alignment tuple for this reference:
+        alignDat (tuple): Alignment tuple for this reference:
             ([read coverage, inferred frag cov, clipped cov], ends, (switch start, switch end))
         windowfrac (float, optional): Window size on either side of riboswitch 3' as a fraction
             of the total riboswitch size to check for fragment end peaks. Defaults to 15%.
@@ -451,8 +447,6 @@ def is_interesting(
     Returns:
         bool: True if alignTuple is determined to be interesting. False if not.
     """
-    cov, rawends, (switch_left, switch_right) = alignTup
-    readcov, infercov, clipcov = cov
 
     # OPTIONS -----------------------------------------------------------------
     kernel_size = 51
@@ -464,20 +458,22 @@ def is_interesting(
     peakWidthMarg = 4
     # -------------------------------------------------------------------------
 
-    kernel = gen_kernel(kernel_size=kernel_size, std_dev=kernel_stdev)
-    ends = np.convolve(rawends, kernel, "same")
+    kernel = _gen_kernel(kernel_size=kernel_size, std_dev=kernel_stdev)
+    alignDat.convolve_rawends(kernel)
 
     # - strand riboswitches are reverse complemented during the reference generation,
     # so the right end in the reference is still the 3' end
-    switch_end = switch_right
+    peaks = find_peaks(alignDat.convends)
 
-    peaks = find_peaks(ends)
+    switch_left = alignDat.switch_start
+    switch_right = alignDat.switch_end
+    switch_end = alignDat.switch_end
 
     window = (int)((switch_right - switch_left) * windowfrac)
     left, right = switch_end - window, switch_end + window
 
     # Max peak from riboswitch 5' to the 3' window end
-    maxpeak = max(ends[switch_left:right])
+    maxpeak = max(alignDat.convends[switch_left:right])
 
     for i in range(len(peaks)):
         cand: Peak = peaks[i]
@@ -490,7 +486,7 @@ def is_interesting(
             and cand.center <= right
             and isclose(cand.height, maxpeak, rel_tol=threshtol)
             and check_cand_drop(
-                cov,
+                alignDat.summedcov,
                 (switch_left, switch_right),
                 cand,
                 kernel_stdev,
@@ -508,7 +504,7 @@ def is_interesting(
                     continue
                 # If there is a mirrored peak within margins,
                 # immediately disqualify
-                cand_stats.append(cand.compare_ks(peak, ends))
+                cand_stats.append(cand.compare_ks(peak, alignDat.convends))
                 if cand.compare(
                     peak, heightMarg=peakHeightTol, widthMarg=peakWidthMarg
                 ):

@@ -480,6 +480,27 @@ class AlignDat:
 
         return max(covpicker[covtype][l:r]) >= thresh
 
+    def bin_rawends(self, bin_size: int = 1):
+        """Bins then sums raw fragment ends within bins.
+
+        Set attributes for binned ends and binned axis
+
+        Args:
+            bin_size (int, optional): Binning size. Defaults to 1.
+        """
+
+        self.bin_ax = [i for i in range(0, len(self.readcov), bin_size)]
+        numbins = len(self.bin_ax)
+
+        self.binned_ends = np.ones(numbins)
+        for i in range(numbins - 1):
+            bstart = self.bin_ax[i]
+            bend = self.bin_ax[i + 1]
+
+            self.binned_ends[i] = sum(self.rawends[bstart:bend])
+
+        self.binned_ends[numbins - 1] = sum(self.rawends[self.bin_ax[numbins - 1] :])
+
 
 class SortedBAM:
     """Wrapper around a sorted BAM file to abstract away feature extraction"""

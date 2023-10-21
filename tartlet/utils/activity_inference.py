@@ -3,8 +3,9 @@ import operator
 
 import matplotlib.pyplot as plt
 
-from scipy.stats import norm, ks_2samp
 from math import ceil, isclose
+from scipy.stats import norm, ks_2samp
+from tart.utils.read_parsing import AlignDat
 
 
 class Peak:
@@ -226,37 +227,6 @@ class Candidate(Peak):
         self.from_switch_end_relative = self.from_switch_end / self.switch_size
 
         self.coverage_delta_noise = nocand_cov_delta
-
-
-def bin_counts(alignTup: tuple, bin_size: int = 1):
-    """Bins then sums fragment ends within bins.
-
-    Args:
-        alignTup (tuple): Alignment tuple: ([*coverage], frag ends, (switch start, switch end)).
-            The coverage list should contain the read coverage, inferred fragment coverage, and
-            clipped coverage arrays in that order
-        bin_size (int, optional): Binning size. Defaults to 1.
-
-    Returns:
-        _type_: _description_
-    """
-    cov, ends, (switch_start, switch_end) = alignTup
-
-    readcov = cov[0]
-
-    bin_pos = [i for i in range(0, len(readcov), bin_size)]
-    numbins = len(bin_pos)
-
-    binned_ends = np.ones(numbins)
-    for i in range(numbins - 1):
-        bstart = bin_pos[i]
-        bend = bin_pos[i + 1]
-
-        binned_ends[i] = sum(ends[bstart:bend])
-
-    binned_ends[numbins - 1] = sum(ends[bin_pos[numbins - 1] :])
-
-    return (cov, binned_ends, (switch_start, switch_end)), bin_pos
 
 
 def plot_gen(

@@ -9,13 +9,13 @@ from tart.utils.mpi_context import BasicMPIContext
 from tart.utils.activity_inference import (
     plot_gen,
     is_interesting,
-    bin_counts,
     has_candidate_peak,
 )
 from tart.utils.activity_inference import Candidate
+from tart.utils.read_parsing import AlignDat
 
 
-def log_cand_charac(align_charac: dict, cand: Candidate):
+def _log_cand_charac(align_charac: dict, cand: Candidate):
     align_charac["coverage_delta"] = cand.abs_cov_delta
     align_charac["coverage_delta_relative"] = cand.rel_cov_delta
     align_charac["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)
@@ -96,13 +96,11 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
 
     # First pass; find suitable candidates if present
     for pick_file in worker_list:
+        # Load in the alignment data object
         with open(pick_file, "rb") as f:
-            # ([read cov, inferred frag cov, clipped cov], ends, (swtch start, end))
-            cov, ends, (switch_start, switch_end) = pickle.load(f)
-            readcov, infercov, clipcov = cov
+            alignDat: AlignDat = pickle.load(f)
 
-        switch_size = switch_end - switch_start
-        alignTup = (cov, ends, (switch_start, switch_end))
+        switch_size = alignDat.switch_end - alignDat.switch_start
 
         # Save path formation and sample/ref IDs
         ref = Path(pick_file[:-2]).name
@@ -117,15 +115,18 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
 
         # Check whether there are enough reads to proceed.
         # This needs to be done to avoid clutter in the results
-        # that failed the filer
-        if max(readcov[switch_start:switch_end]) < min_cov_depth:
+        # that failed the filter
+        if (
+            max(alignDat.readcov[alignDat.switch_start : alignDat.switch_end])
+            < min_cov_depth
+        ):
             align_charac["decision_note"] = "Minimum coverage not reached"
             charac_local.append(align_charac)
             continue
 
         lmarg, rmarg = ext_prop
         cand: Candidate = has_candidate_peak(
-            alignTup, left_margin=lmarg, right_margin=rmarg
+            alignDat, left_margin=lmarg, right_margin=rmarg
         )
         passfaildir = "fail" if cand is None else "pass"
         align_charac["decision"] = passfaildir
@@ -137,25 +138,26 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
             continue
 
         # Extract candidate characteristics and organise in-place
-        log_cand_charac(align_charac, cand)
+        _log_cand_charac(align_charac, cand)
         charac_local.append(align_charac)
 
         save_path.parent.mkdir(exist_ok=True, parents=True)
 
-        alignTup, bin_ax = bin_counts(alignTup, bin_size=bin_size)
+        # Calculate and set info for binned raw ends
+        alignDat.bin_rawends(bin_size=bin_size)
 
         lbuff = int(switch_size * lmarg)
         rbuff = int(switch_size * rmarg)
 
-        plot_gen(
-            ref,
-            alignTup,
-            str(save_path),
-            bin_size=bin_size,
-            bin_ax=bin_ax,
-            lbuff=lbuff,
-            rbuff=rbuff,
-        )
+        # plot_gen(
+        #     ref,
+        #     alignTup,
+        #     str(save_path),
+        #     bin_size=bin_size,
+        #     bin_ax=bin_ax,
+        #     lbuff=lbuff,
+        #     rbuff=rbuff,
+        # )
 
     charac_local_arr = comm.gather(charac_local, root=0)
 

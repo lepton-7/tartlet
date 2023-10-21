@@ -501,6 +501,14 @@ class AlignDat:
 
         self.binned_ends[numbins - 1] = sum(self.rawends[self.bin_ax[numbins - 1] :])
 
+    def convolve_rawends(self, kernel):
+        """Convolve the raw ends array with the normally-weighted kernal.
+
+        Args:
+            kernel (np.ndarray): The 1-D convolution kernel with normally distributed weights.
+        """
+        self.convends = np.convolve(self.rawends, kernel, "same")
+
 
 class SortedBAM:
     """Wrapper around a sorted BAM file to abstract away feature extraction"""

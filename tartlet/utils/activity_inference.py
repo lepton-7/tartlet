@@ -372,7 +372,7 @@ def find_peaks(arr, switch_end, l: int = 0, u: int = -1):
     return ret
 
 
-def gen_kernel(kernel_size: int = 21, std_dev: float = 3.0):
+def _gen_kernel(kernel_size: int = 21, std_dev: float = 3.0):
     """Generates a convolution kernel for a normal pdf
 
     Args:
@@ -522,23 +522,6 @@ def is_interesting(
     return (False, cand_stats)
 
 
-def convolve_array(rawends, kernel_size, std_dev):
-    """Helper function that generates and applies the normally-weighted kernal to the raw ends data.
-
-    Args:
-        rawends (list or np.array): The raw, unprocessed ends data array.
-        kernel_size (int): Size of the 1-D convolution kernel. Must be odd?
-        std_dev (float): Standard deviation used to generate the normally-weighted kernel.
-
-    Returns:
-        list: Convolved list of ends.
-    """
-    kernel = gen_kernel(kernel_size=kernel_size, std_dev=std_dev)
-    ends = np.convolve(rawends, kernel, "same")
-
-    return ends
-
-
 def coverage_delta_per_peak(peaks: list, sumcov: list):
     """Helper function to find coverage deltas across a list of Peaks.
 
@@ -581,44 +564,39 @@ def peak_out_of_cov_delta(sorteddelta: list, i: int):
 
 
 def has_candidate_peak(
-    alignTup: tuple,
+    alignDat: AlignDat,
     kernel_size: int = 51,
     kernel_stdev: int = 5,
     left_margin=1.0,
     right_margin=1.0,
 ):
-    cov, rawends, (switch_left, switch_right) = alignTup
-    readcov, infercov, clipcov = cov
-
-    # np.add can ONLY add two arrays.
-    # The third param is the output array obj
-    sumcov = np.add(readcov, infercov)
-    sumcov = np.add(sumcov, clipcov)
-
-    ends = convolve_array(rawends, kernel_size, kernel_stdev)
+    kernel = _gen_kernel(kernel_size, kernel_stdev)
+    alignDat.convolve_rawends(kernel)
 
     # - strand riboswitches are reverse complemented during the reference
     # generation, so the right end in the reference is still the 3' end
-    switch_end = switch_right
-    switch_size = switch_right - switch_left
+    switch_end = alignDat.switch_end
+    switch_size = alignDat.switch_end - alignDat.switch_start
 
     # Set relevant regions to compare candidates within ± switch size
     # proportion outside the switch
-    relevant_l = switch_left - int(switch_size * left_margin)
-    relevant_r = switch_right + int(switch_size * right_margin)
+    relevant_l = alignDat.switch_start - int(switch_size * left_margin)
+    relevant_r = alignDat.switch_end + int(switch_size * right_margin)
 
-    peaks = find_peaks(ends, switch_end, relevant_l, relevant_r)
+    peaks = find_peaks(alignDat.convends, switch_end, relevant_l, relevant_r)
 
     # Sort peaks in order of increasing absolute distance from riboswitch end
     close_peaks = sorted(peaks, key=operator.attrgetter("abs_from_switch_end"))
 
     # Record how coverage is changed by identified peaks in the region of interest
-    cov_delta = coverage_delta_per_peak(close_peaks, sumcov)
+    cov_delta = coverage_delta_per_peak(close_peaks, alignDat.summedcov)
 
     for i, cand in enumerate(close_peaks):
         is_sig, nocand_cov_delta = peak_out_of_cov_delta(cov_delta, i)
         if is_sig:
-            cand_obj = Candidate(cand, switch_size, nocand_cov_delta, sumcov)
+            cand_obj = Candidate(
+                cand, switch_size, nocand_cov_delta, alignDat.summedcov
+            )
             return cand_obj
 
         else:

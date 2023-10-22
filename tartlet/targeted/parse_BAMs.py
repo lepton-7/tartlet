@@ -3,8 +3,8 @@ import pickle
 
 from glob import glob
 from pathlib import Path
+from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import SortedBAM
-from tart.utils.activity_inference import plot_gen
 from tart.utils.mpi_context import BasicMPIContext
 
 
@@ -86,7 +86,7 @@ def main(
         for alignDat in alignDat_arr:
             if outPlots and alignDat.is_coverage_threshold("read", min_coverage):
                 save_path = save_dir.joinpath(f"{alignDat.ref}.png")
-                # plot_gen(alignDat.ref, alignDat, str(save_path), lbuff=40, rbuff=40)
+                CoveragePlot(alignDat, [40, 40]).default(save_path)
 
             if outPickles and alignDat.is_coverage_threshold("read", min_coverage):
                 save_path = save_dir.joinpath(f"{alignDat.ref}.p")

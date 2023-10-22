@@ -5,14 +5,11 @@ import pandas as pd
 from glob import glob
 from pathlib import Path
 from collections import defaultdict
-from tart.utils.mpi_context import BasicMPIContext
-from tart.utils.activity_inference import (
-    plot_gen,
-    is_interesting,
-    has_candidate_peak,
-)
-from tart.utils.activity_inference import Candidate
+from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat
+from tart.utils.mpi_context import BasicMPIContext
+from tart.utils.activity_inference import Candidate
+from tart.utils.activity_inference import is_interesting, has_candidate_peak
 
 
 def _log_cand_charac(align_charac: dict, cand: Candidate):
@@ -148,16 +145,9 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
 
         lbuff = int(switch_size * lmarg)
         rbuff = int(switch_size * rmarg)
+        end_buffers = [lbuff, rbuff]
 
-        # plot_gen(
-        #     ref,
-        #     alignTup,
-        #     str(save_path),
-        #     bin_size=bin_size,
-        #     bin_ax=bin_ax,
-        #     lbuff=lbuff,
-        #     rbuff=rbuff,
-        # )
+        CoveragePlot(alignDat, end_buffers).default(save_path)
 
     charac_local_arr = comm.gather(charac_local, root=0)
 
@@ -228,13 +218,7 @@ def depr_main(pick_root, out_dir, bin_size):
 
         alignDat.bin_rawends(bin_size=bin_size)
 
-        # plot_gen(
-        #     ref,
-        #     alignTup,
-        #     str(save_path),
-        #     bin_size=bin_size,
-        #     bin_ax=bin_ax,
-        # )
+        CoveragePlot(alignDat, [40, 40]).default(save_path)
 
     charac_local_arr = comm.gather(pass_rate_local, root=0)
 

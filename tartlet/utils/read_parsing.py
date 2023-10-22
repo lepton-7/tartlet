@@ -488,6 +488,7 @@ class AlignDat:
         Args:
             bin_size (int, optional): Binning size. Defaults to 1.
         """
+        self.bin_size = bin_size
 
         self.bin_ax = [i for i in range(0, len(self.readcov), bin_size)]
         numbins = len(self.bin_ax)

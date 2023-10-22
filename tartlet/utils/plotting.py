@@ -54,7 +54,7 @@ class CoveragePlot:
         """
         ax.bar(
             self.bin_x[self.buffstart_bin : self.buffend_bin],
-            self._dat.rawends[self.buffstart_bin : self.buffend_bin],
+            self._dat.binned_ends[self.buffstart_bin : self.buffend_bin],
             color="slateblue",
             width=float(self._dat.bin_size),
             align="edge",

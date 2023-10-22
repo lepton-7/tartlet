@@ -150,10 +150,10 @@ class ReadPair:
 
             # Non-TANDEM case can be assigned at once
             self.f = (
-                self.reads[0] if self.reads[0].orientation is "F" else self.reads[1]
+                self.reads[0] if self.reads[0].orientation == "F" else self.reads[1]
             )
             self.r = (
-                self.reads[0] if self.reads[0].orientation is "R" else self.reads[1]
+                self.reads[0] if self.reads[0].orientation == "R" else self.reads[1]
             )
             # Do the reads in this pair fully overlap at aligned termini?
             if (
@@ -169,11 +169,11 @@ class ReadPair:
                 )
 
                 # Check the case where r is exclusively within f alignment
-                if self.orientation is "FR" and self.r.ref_end < self.f.ref_end:
+                if self.orientation == "FR" and self.r.ref_end < self.f.ref_end:
                     self.orientation = "FFR"
 
                 # Check the case where f is exclusively within r alignment
-                elif self.orientation is "RF" and self.f.ref_end <= self.r.ref_end:
+                elif self.orientation == "RF" and self.f.ref_end <= self.r.ref_end:
                     self.orientation = "RRF"
 
         elif self.in_pair == 1:
@@ -529,7 +529,7 @@ class SortedBAM:
         """Make a list of references in this sorted BAM; only considering references with aligned reads"""
         self.ref_list = [
             idxstats.contig
-            for idxstats in self.bam.get_index_statistics()
+            for idxstats in self._bam.get_index_statistics()
             if idxstats.total > 0
         ]
 

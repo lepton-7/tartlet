@@ -1,8 +1,6 @@
 import numpy as np
 import operator
 
-import matplotlib.pyplot as plt
-
 from math import ceil, isclose
 from scipy.stats import norm, ks_2samp
 from tart.utils.read_parsing import AlignDat
@@ -198,6 +196,46 @@ class Peak:
             self.rel_cov_delta = self.find_absolute_coverage_delta(sumcov) / sumcov[l]
             return self.rel_cov_delta
 
+    def set_frags_ending_at_peak(self, fragments: list[list[tuple]]):
+        """Set attributes for the distribution of start positions and end positions of fragments that end in this Peak.
+
+        Args:
+            fragments (list[list[tuple]]): Fragment tracking list from an AlignDat object.
+                Index of the outer list represents positions. Inner list collects fragments
+                that have an end location at that index.
+        """
+        # self.ending_frags: list[tuple] = []
+        starts = []
+        ends = []
+        left = self.center - int(self.half_width)
+        right = self.center + int(self.half_width)
+
+        # Keep track of all the start and end positions
+        for col_list in fragments[left:right]:
+            for tup in col_list:
+                if tup[0] is not None:  # None-types break finding index offset
+                    starts.append(tup[0])
+                if tup[1] is not None:
+                    ends.append(tup[1])
+
+        # Find what the index offset is to form the base data of the start
+        # and end histograms independent of their index in reference
+        s_off = min(starts)
+        e_off = min(ends)
+
+        # Histogram array size
+        s_size = max(starts) - s_off + 1
+        e_size = max(ends) - e_off + 1
+
+        self.fragment_starts = np.zeros(s_size)
+        self.fragment_ends = np.zeros(e_size)
+
+        for i in starts:
+            self.fragment_starts[i - s_off] += 1
+
+        for i in ends:
+            self.fragment_ends[i - e_off] += 1
+
 
 class Candidate(Peak):
     """Wraps the relevant information to return as a candidate for transcription termination activity.
@@ -211,7 +249,7 @@ class Candidate(Peak):
         cand: Peak,
         switch_size: int,
         nocand_cov_delta: list,
-        sumcov: list,
+        alignDat: AlignDat,
     ) -> None:
         super().__init__(
             from_switch_end=cand.from_switch_end,
@@ -220,13 +258,17 @@ class Candidate(Peak):
             half_width=cand.half_width,
         )
 
-        self.abs_cov_delta = cand.find_absolute_coverage_delta(sumcov)
-        self.rel_cov_delta = cand.find_relative_coverage_delta(sumcov)
+        self.abs_cov_delta = cand.find_absolute_coverage_delta(alignDat.summedcov)
+        self.rel_cov_delta = cand.find_relative_coverage_delta(alignDat.summedcov)
 
         self.switch_size = switch_size
         self.from_switch_end_relative = self.from_switch_end / self.switch_size
 
         self.coverage_delta_noise = nocand_cov_delta
+
+        # Find start position and end position distributions for fragments
+        # that ended in this candidate.
+        self.set_frags_ending_at_peak(alignDat.fragments)
 
 
 def find_peaks(arr, switch_end, l: int = 0, u: int = -1):
@@ -473,9 +515,7 @@ def has_candidate_peak(
     for i, cand in enumerate(close_peaks):
         is_sig, nocand_cov_delta = peak_out_of_cov_delta(cov_delta, i)
         if is_sig:
-            cand_obj = Candidate(
-                cand, switch_size, nocand_cov_delta, alignDat.summedcov
-            )
+            cand_obj = Candidate(cand, switch_size, nocand_cov_delta, alignDat)
             return cand_obj
 
         else:

@@ -247,7 +247,7 @@ class AlignDat:
 
         # Stores terminal positions for the likely fragment spanned by each ReadPair.
         # Tuples with the same right terminal position are collected into lists.
-        self.fragments: list[list[Tuple]] = [[] for _ in reflength]
+        self.fragments: list[list[tuple]] = [[] for _ in reflength]
 
         self.rawends = np.zeros(reflength)
 

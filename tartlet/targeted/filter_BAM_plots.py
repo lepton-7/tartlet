@@ -5,6 +5,7 @@ import pandas as pd
 from glob import glob
 from pathlib import Path
 from collections import defaultdict
+from scipy.stats import ks_2samp
 from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat
 from tart.utils.mpi_context import BasicMPIContext
@@ -19,6 +20,10 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
 
     align_charac["from_riboswith_end"] = cand.from_switch_end
     align_charac["from_riboswith_end_relative"] = cand.from_switch_end_relative
+
+    ksRes = ks_2samp(cand.fragment_starts, cand.fragment_ends)
+    align_charac["ks_stat"] = ksRes.statistic
+    align_charac["ks_p"] = ksRes.pvalue
 
 
 @click.command()
@@ -105,7 +110,7 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
 
         transcriptome = Path(pick_file).parts[-2]
 
-        # Reset to confirm no carry-over between alignments
+        # Reset to confirm no carry-over between alignments ---------------
         align_charac = {}
         align_charac["rowid"] = ref
         align_charac["transcriptome"] = str(transcriptome)

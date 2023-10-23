@@ -1,3 +1,4 @@
+from ast import Tuple
 import pysam
 import numpy as np
 import json
@@ -27,6 +28,20 @@ class Read:
 
         # get_blocks() does not include soft clipped regions
         self.block_loci = read.get_blocks()
+
+        # The head is the leading end of the read
+        self.head = (
+            self.block_loci[-1][-1]
+            if self.orientation == "F"
+            else self.block_loci[0][0]
+        )
+
+        # The tail is the start end of the read
+        self.tail = (
+            self.block_loci[0][0]
+            if self.orientation == "R"
+            else self.block_loci[-1][-1]
+        )
 
     def _split_cigar(self):
         """Turns the read CIGAR string into a list by separating between numbers and CIGAR opcodes.
@@ -110,13 +125,14 @@ class ReadPair:
         """
 
         self.in_pair = len(reads)
-        self.reads = reads
+        self._reads = reads
 
         # Make sure reads have the same name
         self._check_read_names(reads)
         self.name = reads[0].name
 
         self._compute_pair_orientation()
+        self._assign_frag_termini()
 
     def _compute_pair_orientation(self):
         """Computes read pair orientation based on the ALIGNED segments
@@ -128,9 +144,9 @@ class ReadPair:
         "EQ" denotes reads aligned in opposite directions but overlapped across
         terminal base alignments.
 
-        "FR" denotes that the left-most aligned
-        base belongs to the forward aligned read and "RF" denotes that the
-        left-most aligned base belongs to the reverse aligned read.
+        "FR" denotes that the left-most aligned base belongs to the forward
+        aligned read and "RF" denotes that the left-most aligned base belongs
+        to the reverse aligned read.
 
         "FFR" is an errant orientation denoting that the reverse read is fully
         aligned within the aligned termini of the forward read. Similarly,
@@ -143,22 +159,22 @@ class ReadPair:
 
         if self.in_pair == 2:  # Is the full pair mapped?
             # Check if the reads are tandem
-            if self.reads[0].orientation == self.reads[1].orientation:
+            if self._reads[0].orientation == self._reads[1].orientation:
                 self.f, self.r = None, None
                 self.orientation = "TANDEM"
                 return
 
             # Non-TANDEM case can be assigned at once
             self.f = (
-                self.reads[0] if self.reads[0].orientation == "F" else self.reads[1]
+                self._reads[0] if self._reads[0].orientation == "F" else self._reads[1]
             )
             self.r = (
-                self.reads[0] if self.reads[0].orientation == "R" else self.reads[1]
+                self._reads[0] if self._reads[0].orientation == "R" else self._reads[1]
             )
             # Do the reads in this pair fully overlap at aligned termini?
             if (
-                self.reads[0].ref_start == self.reads[1].ref_start
-                and self.reads[0].ref_end == self.reads[1].ref_end
+                self._reads[0].ref_start == self._reads[1].ref_start
+                and self._reads[0].ref_end == self._reads[1].ref_end
             ):
                 self.orientation = "EQ"
                 return
@@ -177,10 +193,10 @@ class ReadPair:
                     self.orientation = "RRF"
 
         elif self.in_pair == 1:
-            self.orientation = self.reads[0].orientation
+            self.orientation = self._reads[0].orientation
 
             # Don't need to specify f or r since there's just one mapped read in pair
-            self.read = self.reads[0]
+            self.read = self._reads[0]
 
         else:
             raise ValueError("More than two reads cannot be processed as a pair.")
@@ -199,6 +215,21 @@ class ReadPair:
             if read.name != name:
                 raise ValueError("Reads supplied do not seem to have the same name.")
 
+    def _assign_frag_termini(self):
+        if self.in_pair == 1:
+            self.fragment_termini = (
+                (self.read.tail, None)
+                if self.orientation == "F"
+                else (None, self.read.tail)
+            )
+
+        elif self.in_pair == 2:
+            if self.orientation == "FR" or self.orientation == "EQ":
+                self.fragment_termini = (self.f.tail, self.r.tail)
+
+            elif self.orientation in ["RF", "TANDEM", "FFR", "RRF"]:
+                self.fragment_termini = (None, None)
+
 
 class AlignDat:
     """
@@ -213,6 +244,10 @@ class AlignDat:
         self.readcov = np.zeros(reflength)
         self.infercov = np.zeros(reflength)
         self.clipcov = np.zeros(reflength)
+
+        # Stores terminal positions for the likely fragment spanned by each ReadPair.
+        # Tuples with the same right terminal position are collected into lists.
+        self.fragments: list[list[Tuple]] = [[] for _ in reflength]
 
         self.rawends = np.zeros(reflength)
 
@@ -421,6 +456,17 @@ class AlignDat:
 
         return True
 
+    def _process_frag_locus(self, pair: ReadPair):
+        """Store the terminal positions in self.fragment indexed by the right end of pair fragment.
+
+        Args:
+            pair (ReadPair): Pair spanning the likely fragment.
+        """
+        l, r = pair.fragment_termini
+
+        if r is not None:
+            self.fragments[r].append(pair.fragment_termini)
+
     def process_pairs(self, pairs: list[ReadPair], allowSoftClips: bool) -> "AlignDat":
         """Process a list of ReadPair objects to extract alignment coverage and ends data.
 
@@ -436,7 +482,7 @@ class AlignDat:
         for pair in pairs:
             readIsProcessed = False
 
-            # Skip pair if in RF or and errant orientation
+            # Skip pair if in RF or an errant orientation
             if pair.orientation in ["RF", "TANDEM", "RRF", "FFR"]:  # Uh oh
                 continue
 
@@ -455,6 +501,7 @@ class AlignDat:
                     continue
 
             self._coalesce_into_cov(pair, self.allowSoftClips)
+            self._process_frag_locus(pair)
 
         self.sum_cov()
         return self

@@ -220,21 +220,26 @@ class Peak:
 
         # Find what the index offset is to form the base data of the start
         # and end histograms independent of their index in reference
-        s_off = min(starts)
-        e_off = min(ends)
+        if len(starts) > 0 and len(ends) > 0:
+            s_off = min(starts)
+            e_off = min(ends)
 
-        # Histogram array size
-        s_size = max(starts) - s_off + 1
-        e_size = max(ends) - e_off + 1
+            # Histogram array size
+            s_size = max(starts) - s_off + 1
+            e_size = max(ends) - e_off + 1
 
-        self.fragment_starts = np.zeros(s_size)
-        self.fragment_ends = np.zeros(e_size)
+            self.fragment_starts = np.zeros(s_size)
+            self.fragment_ends = np.zeros(e_size)
 
-        for i in starts:
-            self.fragment_starts[i - s_off] += 1
+            for i in starts:
+                self.fragment_starts[i - s_off] += 1
 
-        for i in ends:
-            self.fragment_ends[i - e_off] += 1
+            for i in ends:
+                self.fragment_ends[i - e_off] += 1
+
+        else:
+            self.fragment_starts = [0]
+            self.fragment_ends = [0]
 
 
 class Candidate(Peak):

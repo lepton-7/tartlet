@@ -1,8 +1,8 @@
-from ast import Tuple
+import json
 import pysam
 import numpy as np
-import json
 
+from click import echo
 from collections import defaultdict
 
 
@@ -247,7 +247,7 @@ class AlignDat:
 
         # Stores terminal positions for the likely fragment spanned by each ReadPair.
         # Tuples with the same right terminal position are collected into lists.
-        self.fragments: list[list[tuple]] = [[] for _ in reflength]
+        self.fragments: list[list[tuple]] = [[] for _ in range(reflength)]
 
         self.rawends = np.zeros(reflength)
 
@@ -286,7 +286,7 @@ class AlignDat:
 
         # Handle unpaired F or R reads first
         if pair.in_pair == 1:
-            read = pair.reads[0]
+            read = pair.read
 
             fstart = read.block_loci[0][0]
             rend = read.block_loci[-1][1]
@@ -319,7 +319,8 @@ class AlignDat:
                     clipped_regions.append((rend, rclip_end))
 
         elif pair.orientation == "FR" or pair.orientation == "EQ":
-            fread, revread = pair.reads
+            fread = pair.f
+            revread = pair.r
 
             fstart = fread.block_loci[0][0]
             fend = fread.block_loci[-1][1]
@@ -613,7 +614,14 @@ class SortedBAM:
             read = Read(pys_read)
             temp[read.name].append(read)
 
-        return [ReadPair(*pairlist) for _, pairlist in temp.items()]
+        toRet = []
+        for _, pairlist in temp.items():
+            try:
+                toRet.append(ReadPair(*pairlist))
+            except ValueError:
+                echo(f"More than 2 reads assigned to pair: {pairlist}")
+
+        return toRet
 
     def generate_ref_alignment_data(self, allowSoftClips: bool) -> list[AlignDat]:
         """Generate alignment data for each reference found in the sorted BAM using all aligned reads/read pairs and return as a list.

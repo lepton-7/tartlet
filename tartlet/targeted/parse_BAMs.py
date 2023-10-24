@@ -52,6 +52,7 @@ from tart.utils.mpi_context import BasicMPIContext
 def main(
     bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles, allow_soft_clips
 ):
+    out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # List of all sorted BAMS to process

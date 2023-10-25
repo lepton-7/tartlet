@@ -243,6 +243,7 @@ class AlignDat:
 
         self.readcov = np.zeros(reflength)
         self.infercov = np.zeros(reflength)
+        self.overlapcov = np.zeros(reflength)
         self.clipcov = np.zeros(reflength)
 
         # Stores terminal positions for the likely fragment spanned by each ReadPair.
@@ -282,6 +283,7 @@ class AlignDat:
         """
         read_regions = []
         inferred_regions = []
+        overlapped_regions = []
         clipped_regions = []
 
         # Handle unpaired F or R reads first
@@ -328,18 +330,21 @@ class AlignDat:
             rstart = revread.block_loci[0][0]
             rend = revread.block_loci[-1][1]
 
-            # The regions actually covered by the reads, but we dont wan't to double count
-            # bases that have overlapping reads of the same pair
+            # The regions actually covered by the reads, but we dont want to double count
+            # bases that have overlapping reads of the same pair. These are processed separately.
             if fend < rstart:
                 read_regions.extend([(fstart, fend), (rstart, rend)])
             else:
-                read_regions.extend([(fstart, fend), (fend, rend)])
+                read_regions.extend([(fstart, rstart), (fend, rend)])
 
             # The regions between the heads of the reads that is
             # inferred to be part of the sequenced fragment. If
             # fend is greater than rstart, the tuple will ultimately not
             # do anything, which is very convenient
             inferred_regions.append((fend, rstart))
+
+            # Overlap region between reads in a pair
+            overlapped_regions.extend([(rstart, fend)])
 
             if allowSoftClips:
                 fcigs = fread.cigarlist
@@ -374,6 +379,10 @@ class AlignDat:
         for start, end in inferred_regions:
             for i in range(start, end):
                 self.infercov[i] += 1
+
+        for start, end in overlapped_regions:
+            for i in range(start, end):
+                self.overlapcov[i] += 1
 
         for start, end in clipped_regions:
             for i in range(start, end):

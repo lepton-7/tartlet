@@ -9,7 +9,64 @@ from tart.utils.read_parsing import AlignDat
 class CoveragePlot:
     """Handle plotting of alignment data."""
 
-    def __init__(self, alignDat: AlignDat, end_buffers: list[int]) -> None:
+    def __init__(
+        self, alignDat: AlignDat, end_buffers: list[int], palette: str = "heavypastel"
+    ) -> None:
+        self.palette_picker = {
+            "apricots": {
+                "Read": "#68904D",
+                "Overlapped": "#14471E",
+                "Inferred": "#DA6A00",
+                "Clipped": "#C8D2D1",
+                "axback": "#FFFFFF",
+                "figback": "#FFFFFF",
+            },
+            "pastelbluepeach": {
+                "Read": "#006D77",
+                "Overlapped": "#FFDDD2",
+                "Inferred": "#E29578",
+                "Clipped": "#FFDDD2",
+                "axback": "#FFFFFF",
+                "figback": "#FFFFFF",
+            },
+            "heavypastel": {
+                "Read": "#3D5A80",
+                "Overlapped": "#293241",
+                "Inferred": "#EE6C4D",
+                "Clipped": "#98C1D9",
+                "axback": "#E0FBFC",
+                "figback": "#E0FBFC",
+            },
+            "figs": {
+                "Read": "#483948",
+                "Overlapped": "#180C0C",
+                "Inferred": "#ED413E",
+                "Clipped": "#B2AB2E",
+                "axback": "#FFFFFF",
+                "figback": "#FFFFFF",
+            },
+            "asterpink": {
+                "Read": "#ab3777",
+                "Overlapped": "#721836",
+                "Inferred": "#efb420",
+                "Clipped": "#373933",
+                "axback": "#FFFFFF",
+                "figback": "#FFFFFF",
+            },
+            "warmpastel": {
+                "Read": "#C5998C",
+                "Overlapped": "#4E4035",
+                "Inferred": "#D67F54",
+                "Clipped": "#DDE2DC",
+                "axback": "#FFFFFF",
+                "figback": "#DDE2DC",
+            },
+        }
+
+        # Named colours:
+        # https://matplotlib.org/stable/_images/sphx_glr_named_colors_003_2_00x.png
+        self.palette = self.palette_picker[palette]
+
         self._dat = alignDat
 
         self.lbuff = end_buffers[0]
@@ -55,10 +112,11 @@ class CoveragePlot:
         ax.bar(
             self.bin_x[self.buffstart_bin : self.buffend_bin],
             self._dat.binned_ends[self.buffstart_bin : self.buffend_bin],
-            color="slateblue",
+            color=self.palette["Read"],
             width=float(self._dat.bin_size),
             align="edge",
         )
+        ax.set_facecolor(self.palette["axback"])
         ax.set_title(f"Inferred fragment ends ({self._dat.bin_size}nt bins)")
         ax.set_xticks(self.xticks)
         ax.set_xlabel("Nucleotide position (bp)")
@@ -91,14 +149,11 @@ class CoveragePlot:
         """
         coverage_counts = {
             "Read": self._dat.readcov,
+            "Overlapped": self._dat.overlapcov,
             "Inferred": self._dat.infercov,
             "Clipped": self._dat.clipcov,
         }
-        coverage_colours = {
-            "Read": "slateblue",
-            "Inferred": "crimson",
-            "Clipped": "mediumseagreen",
-        }
+
         bottom = np.zeros(len(self.x))
 
         for type, count in coverage_counts.items():
@@ -107,13 +162,14 @@ class CoveragePlot:
                 count[self.buffstart : self.buffend],
                 label=type,
                 bottom=bottom[self.buffstart : self.buffend],
-                color=coverage_colours[type],
+                color=self.palette[type],
                 width=1,
                 align="edge",
             )
 
             bottom += count
 
+        ax.set_facecolor(self.palette["axback"])
         ax.set_title("Fragment coverage")
         ax.legend(loc="upper right")
         ax.set_ylabel("Count")
@@ -125,7 +181,13 @@ class CoveragePlot:
             save_path (str): Save path. Parent directories must exist.
         """
         fig, ax = plt.subplots(
-            2, 1, sharex=True, figsize=(20, 10), dpi=100, constrained_layout=True
+            2,
+            1,
+            sharex=True,
+            figsize=(20, 10),
+            dpi=100,
+            constrained_layout=True,
+            facecolor=self.palette["figback"],
         )
         fig.suptitle(f"{self._dat.ref}")
 
@@ -135,3 +197,6 @@ class CoveragePlot:
         fig.savefig(f"{save_path}")
 
         plt.close()
+
+    def set_palette(self, palette):
+        self.palette = self.palette_picker[palette]

@@ -148,9 +148,9 @@ class CoveragePlot:
             ax (Axes): Panel Axes.
         """
         coverage_counts = {
-            "Read": self._dat.readcov,
-            "Overlapped": self._dat.overlapcov,
             "Inferred": self._dat.infercov,
+            "Overlapped": self._dat.overlapcov,
+            "Read": self._dat.readcov,
             "Clipped": self._dat.clipcov,
         }
 

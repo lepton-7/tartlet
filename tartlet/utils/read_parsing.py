@@ -133,6 +133,7 @@ class ReadPair:
 
         self._compute_pair_orientation()
         self._assign_frag_termini()
+        self._compute_frag_length()
 
     def _compute_pair_orientation(self):
         """Computes read pair orientation based on the ALIGNED segments
@@ -216,6 +217,10 @@ class ReadPair:
                 raise ValueError("Reads supplied do not seem to have the same name.")
 
     def _assign_frag_termini(self):
+        """Determines the bounds [inclusive, exclusive) of the fragment spanned.
+
+        Only records likely valid bounds. One or both bounds may be None if orientation
+        is "F" or "R", or errant."""
         if self.in_pair == 1:
             self.fragment_termini = (
                 (self.read.tail, None)
@@ -229,6 +234,18 @@ class ReadPair:
 
             elif self.orientation in ["RF", "TANDEM", "FFR", "RRF"]:
                 self.fragment_termini = (None, None)
+
+    def _compute_frag_length(self):
+        """Determines fragment size spanned by this fragment"""
+        if self.in_pair == 1:
+            self.fragment_size = None
+
+        elif self.in_pair == 2:
+            if self.orientation == "FR" or self.orientation == "EQ":
+                self.fragment_size = self.fragment_termini[1] - self.fragment_termini[0]
+
+            elif self.orientation in ["RF", "TANDEM", "FFR", "RRF"]:
+                self.fragment_size = None
 
 
 class AlignDat:

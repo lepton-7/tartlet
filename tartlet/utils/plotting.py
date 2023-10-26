@@ -36,8 +36,8 @@ class CoveragePlot:
                 "Clipped": "#98C1D9",
                 # "Termini": "#698F3F",
                 "Termini": "#F00699",
-                "axback": "#E0FBFC",
-                "figback": "#E0FBFC",
+                "axback": "#FFFFFF",
+                "figback": "#FFFFFF",
             },
             "figs": {
                 "Read": "#483948",

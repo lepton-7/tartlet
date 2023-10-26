@@ -34,6 +34,8 @@ class CoveragePlot:
                 "Overlapped": "#293241",
                 "Inferred": "#EE6C4D",
                 "Clipped": "#98C1D9",
+                # "Termini": "#698F3F",
+                "Termini": "#F00699",
                 "axback": "#E0FBFC",
                 "figback": "#E0FBFC",
             },
@@ -151,6 +153,7 @@ class CoveragePlot:
             "Inferred": self._dat.infercov,
             "Overlapped": self._dat.overlapcov,
             "Read": self._dat.readcov,
+            "Termini": self._dat.terminalcov,
             "Clipped": self._dat.clipcov,
         }
 

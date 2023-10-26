@@ -245,6 +245,7 @@ class AlignDat:
         self.infercov = np.zeros(reflength)
         self.overlapcov = np.zeros(reflength)
         self.clipcov = np.zeros(reflength)
+        self.terminalcov = np.zeros(reflength)
 
         # Stores terminal positions for the likely fragment spanned by each ReadPair.
         # Tuples with the same right terminal position are collected into lists.
@@ -285,6 +286,7 @@ class AlignDat:
         inferred_regions = []
         overlapped_regions = []
         clipped_regions = []
+        terminal_regions = []
 
         # Handle unpaired F or R reads first
         if pair.in_pair == 1:
@@ -293,7 +295,13 @@ class AlignDat:
             fstart = read.block_loci[0][0]
             rend = read.block_loci[-1][1]
 
-            read_regions.append((fstart, rend))
+            if pair.orientation == "F":
+                read_regions.append((fstart + 1, rend))
+                terminal_regions.append((fstart, fstart + 1))
+
+            elif pair.orientation == "R":
+                read_regions.append((fstart, rend - 1))
+                terminal_regions.append((rend - 1, rend))
 
             # If soft clipped regions should be considered, compute the length of
             # the clip and increment the fragment coverage array over that region as well
@@ -333,9 +341,9 @@ class AlignDat:
             # The regions actually covered by the reads, but we dont want to double count
             # bases that have overlapping reads of the same pair. These are processed separately.
             if fend < rstart:
-                read_regions.extend([(fstart, fend), (rstart, rend)])
-            else:
-                read_regions.extend([(fstart, rstart), (fend, rend)])
+                read_regions.extend([(fstart + 1, fend), (rstart, rend - 1)])
+            else:  # reads in the pair overlap
+                read_regions.extend([(fstart + 1, rstart), (fend, rend - 1)])
 
             # The regions between the heads of the reads that is
             # inferred to be part of the sequenced fragment. If
@@ -344,7 +352,10 @@ class AlignDat:
             inferred_regions.append((fend, rstart))
 
             # Overlap region between reads in a pair
-            overlapped_regions.extend([(rstart, fend)])
+            overlapped_regions.append((rstart, fend))
+
+            # terminal bases
+            terminal_regions.extend([(fstart, fstart + 1), (rend - 1, rend)])
 
             if allowSoftClips:
                 fcigs = fread.cigarlist
@@ -387,6 +398,10 @@ class AlignDat:
         for start, end in clipped_regions:
             for i in range(start, end):
                 self.clipcov[i] += 1
+
+        for start, end in terminal_regions:
+            for i in range(start, end):
+                self.terminalcov[i] += 1
 
     def _process_ends(self, read: Read, allowSoftClips):
         """Adds the tail of a read (the start of read synthesis) to an array

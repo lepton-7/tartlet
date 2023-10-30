@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from math import ceil
 from matplotlib.axes import Axes
 from tart.utils.read_parsing import AlignDat
+from tart.utils.activity_inference import _gen_kernel
 
 
 class CoveragePlot:
@@ -143,6 +144,50 @@ class CoveragePlot:
             annotation_clip=False,
         )
 
+    def _conv_ends_panel(self, ax: Axes):
+        """Add the raw end convolution panel to the figure.
+
+        Args:
+            ax (Axes): Panel Axes.
+        """
+        try:
+            conv_ends = self._dat.convends
+        except AttributeError:
+            k = _gen_kernel(51, 3)
+            self._dat.convolve_rawends(k)
+
+        ax.bar(
+            self.x[self.buffstart : self.buffend],
+            self._dat.convends[self.buffstart : self.buffend],
+            color=self.palette["Read"],
+            width=1,
+            align="edge",
+        )
+        ax.set_facecolor(self.palette["axback"])
+        ax.set_title(f"Convolved inferred fragment ends ({self._dat.bin_size}nt bins)")
+        ax.set_xticks(self.xticks)
+        ax.set_xlabel("Nucleotide position (bp)")
+
+        bott, top = ax.get_ylim()
+        ax.set_ylabel("Count")
+
+        a_height = (top - bott) * 0.05
+
+        ax.annotate(
+            "",
+            xy=(self._dat.switch_start, 0),
+            xytext=(self._dat.switch_start, a_height),
+            arrowprops=dict(facecolor="black"),
+            annotation_clip=False,
+        )
+        ax.annotate(
+            "",
+            xy=(self._dat.switch_end, 0),
+            xytext=(self._dat.switch_end, a_height),
+            arrowprops=dict(facecolor="black"),
+            annotation_clip=False,
+        )
+
     def _coverage_panel(self, ax: Axes):
         """Add the coverage panel to the figure.
 
@@ -196,6 +241,31 @@ class CoveragePlot:
 
         self._coverage_panel(ax[0])
         self._binned_ends_panel(ax[1])
+
+        fig.savefig(f"{save_path}")
+
+        plt.close()
+
+    def _with_conv(self, save_path: str):
+        """Generate the reference alignment plot with the fragment end
+        convolution panel and save to file.
+
+        Args:
+            save_path (str): Save path. Parent directories must exist.
+        """
+        fig, ax = plt.subplots(
+            2,
+            1,
+            sharex=True,
+            figsize=(20, 10),
+            dpi=100,
+            constrained_layout=True,
+            facecolor=self.palette["figback"],
+        )
+        fig.suptitle(f"{self._dat.ref}")
+
+        self._coverage_panel(ax[0])
+        self._conv_ends_panel(ax[1])
 
         fig.savefig(f"{save_path}")
 

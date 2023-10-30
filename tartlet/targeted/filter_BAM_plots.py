@@ -53,9 +53,6 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
     help="Maximum read coverage (not inferred or clipped coverage) within the riboswitch region must be equal or greater than the specified threshold to proceed with pass/fail classification and include the alignment in the pass rate calculations.",
 )
 @click.option(
-    "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
-)
-@click.option(
     "--ext-prop",
     nargs=2,
     default=(1.0, 1.0),
@@ -65,15 +62,23 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
         For a 100bp riboswitch, passing 0.2 0.6 sets the search space from 20bp preceeding the riboswitch 5' end to 60bp beyond the riboswitch 3' end. \
         Similarly, passing -0.2 -0.6 sets the search space as 20bp into the 5' end and 60bp from the 3' end.",
 )
-def exec_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, run_depr):
+@click.option(
+    "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
+)
+@click.option(
+    "--conv",
+    is_flag=True,
+    help="(Dev use) Output plots with the ends convolution panel.",
+)
+def exec_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, run_depr, conv):
     if run_depr:
         depr_main(pick_root, out_dir, bin_size)
 
     else:
-        main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop)
+        main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv)
 
 
-def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
+def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
     # Determine MPI context
     mp_con = BasicMPIContext()
     comm = mp_con.comm
@@ -157,7 +162,12 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
         rbuff = int(switch_size * rplot)
         end_buffers = [lbuff, rbuff]
 
-        CoveragePlot(alignDat, end_buffers).default(save_path)
+        pObj = CoveragePlot(alignDat, end_buffers)
+        if conv:
+            pObj.default(save_path)
+
+        else:
+            pObj._with_conv(save_path)
 
     charac_local_arr = comm.gather(charac_local, root=0)
 

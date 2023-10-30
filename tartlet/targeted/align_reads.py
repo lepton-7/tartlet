@@ -46,7 +46,7 @@ def main(ref_dir, m1, m2, out_dir, readpair_name, hisat2):
         samout_dir = f"{out_dir}/{rswtch_class}"
         Path(samout_dir).mkdir(parents=True, exist_ok=True)
 
-        samout_path = f"{samout_dir}/{rswtch_class}.{readpair_name}.sam"
+        samout_path = f"{samout_dir}/{readpair_name}.sam"
 
         call = run(
             [

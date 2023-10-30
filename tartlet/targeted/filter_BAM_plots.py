@@ -164,10 +164,10 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
 
         pObj = CoveragePlot(alignDat, end_buffers)
         if conv:
-            pObj.default(save_path)
+            pObj._with_conv(save_path)
 
         else:
-            pObj._with_conv(save_path)
+            pObj.default(save_path)
 
     charac_local_arr = comm.gather(charac_local, root=0)
 

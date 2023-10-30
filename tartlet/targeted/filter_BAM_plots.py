@@ -14,6 +14,7 @@ from tart.utils.activity_inference import is_interesting, has_candidate_peak
 
 
 def _log_cand_charac(align_charac: dict, cand: Candidate):
+    align_charac["peak_width"] = cand.half_width * 2
     align_charac["coverage_delta"] = cand.abs_cov_delta
     align_charac["coverage_delta_relative"] = cand.rel_cov_delta
     align_charac["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)

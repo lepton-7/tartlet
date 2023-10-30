@@ -149,6 +149,10 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
         # Calculate and set info for binned raw ends
         alignDat.bin_rawends(bin_size=bin_size)
 
+        # We still want to see a large region around the switch in the plots
+        lmarg = 1.0 if lmarg < 1.0 else lmarg
+        rmarg = 1.0 if rmarg < 1.0 else rmarg
+
         lbuff = int(switch_size * lmarg)
         rbuff = int(switch_size * rmarg)
         end_buffers = [lbuff, rbuff]

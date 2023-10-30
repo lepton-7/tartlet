@@ -1,3 +1,4 @@
+from typing import Optional
 import click
 import requests
 
@@ -89,8 +90,8 @@ def cmscan(
     seq_file: Path,
     out_dir: Path,
     cm_path: Path,
-    options: tuple or list,
-    out_file: Path = None,
+    options: tuple | list,
+    out_file: Optional[Path] = None,
     rank: int = 0,
     no_stats: bool = False,
 ):
@@ -140,7 +141,7 @@ def cmscan(
 def riboswitch_cmscan(
     seq_file: str or Path,
     out_dir: str or Path,
-    options: tuple or list = [],
+    options: tuple | list = [],
     ver: float = current_ver,
     **kwargs,
 ):

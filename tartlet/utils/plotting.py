@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -222,7 +223,7 @@ class CoveragePlot:
         ax.legend(loc="upper right")
         ax.set_ylabel("Count")
 
-    def default(self, save_path: str):
+    def default(self, save_path: str | Path):
         """Generate the default reference alignment plot and save to file.
 
         Args:
@@ -246,7 +247,7 @@ class CoveragePlot:
 
         plt.close()
 
-    def _with_conv(self, save_path: str):
+    def _with_conv(self, save_path: str | Path):
         """Generate the reference alignment plot with the fragment end
         convolution panel and save to file.
 

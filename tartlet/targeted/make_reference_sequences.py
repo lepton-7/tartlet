@@ -80,6 +80,11 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
     elif Path(genome_dir).is_file():
         genomes_list = [genome_dir]
 
+    else:
+        raise ValueError(
+            f"Genome directory '{genome_dir} is neither a directory nor a file'"
+        )
+
     # Setup MPI to parse switch sequences
     mp_con = BasicMPIContext(genomes_list)
     comm = mp_con.comm
@@ -119,7 +124,10 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
                     end = int(row["seq_from"])
 
                 else:
-                    print("Yikes")  # should not be possible
+                    print(
+                        f"Yikes: strand notation not recognised."
+                    )  # should not be possible
+                    continue
 
                 contigseq = MAGDict[row["query_name"]]
 
@@ -153,6 +161,8 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
                 seqs_local[classname].update({rowid: switch})
 
     seqs_arr = comm.gather(seqs_local, root=0)
+    if seqs_arr is None:
+        raise ValueError("Gather failed.")
 
     # Consolidate on root thread
     if rank == 0:
@@ -195,17 +205,17 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
         for idx in range(num_switch_classes):
             # Should probably refactor to use scatter instead of individual sends
             if not rank:
-                key, val = dummy_ledger[idx]
+                key, val = dummy_ledger[idx]  # type: ignore
 
-                comm.send(key, dest=idx + 1, tag=10)
-                comm.send(val, dest=idx + 1, tag=100)
+                comm.send(key, dest=idx + 1, tag=10)  # type: ignore
+                comm.send(val, dest=idx + 1, tag=100)  # type: ignore
 
             elif rank == idx + 1:
-                classname = comm.recv(source=0, tag=10)
-                sub_d = comm.recv(source=0, tag=100)
+                classname = comm.recv(source=0, tag=10)  # type: ignore
+                sub_d = comm.recv(source=0, tag=100)  # type: ignore
 
         # Write riboswitch sequences to disk
-        write_step(classname, sub_d)
+        write_step(classname, sub_d)  # type: ignore
 
     def singlethreaded_writeout(seqs_ledger):
         if rank == 0:
@@ -224,7 +234,7 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
             classname = None
             sub_d = None
 
-        multithreaded_writeout(num_switch_classes, seqs_ledger)
+        multithreaded_writeout(num_switch_classes, seqs_ledger)  # type: ignore
 
     else:
-        singlethreaded_writeout(seqs_ledger)
+        singlethreaded_writeout(seqs_ledger)  # type: ignore

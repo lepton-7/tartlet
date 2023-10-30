@@ -65,7 +65,9 @@ def main(ref_dir, m1, m2, out_dir, readpair_name, hisat2):
             stderr=PIPE,
         )
         if call.returncode:
-            print("Failed:\n", call.stderr.decode("utf-8"))
+            print(
+                f"Failed:\n{call.stderr.decode('utf-8')}",
+            )
 
         else:
             print(call.stdout.decode("utf-8"))

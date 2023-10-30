@@ -1,5 +1,5 @@
 import click
-from typing import Any
+from typing import Any, Optional
 
 try:
     from mpi4py import MPI
@@ -29,7 +29,7 @@ class PseudoMPICOMM:
 
 
 class BasicMPIContext:
-    def __init__(self, full_list: list = None) -> None:
+    def __init__(self, full_list: Optional[list] = None) -> None:
         self.full_list = full_list
 
         if no_mpi4py:
@@ -49,6 +49,9 @@ class BasicMPIContext:
         self.full_list = full_list
 
     def generate_worker_list(self) -> list:
+        if self.full_list is None:
+            raise AttributeError("List not defined")
+
         maxlen = len(self.full_list)
 
         # Determine the subset processed by one instance

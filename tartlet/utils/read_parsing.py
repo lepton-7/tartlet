@@ -1,6 +1,8 @@
 import json
+from typing import Optional
 import pysam
 import numpy as np
+import numpy.typing as npt
 
 from click import echo
 from collections import defaultdict
@@ -64,6 +66,9 @@ class Read:
         }
 
         top = 0
+        if self.cigarstring is None:
+            return []
+
         for i in range(len(self.cigarstring)):
             val = self.cigarstring[top:i]
 
@@ -98,6 +103,9 @@ class Read:
         }
 
         top = 0
+        if self.cigarstring is None:
+            return tally_dict
+
         for i in range(len(self.cigarstring)):
             val = self.cigarstring[top:i]
 
@@ -161,7 +169,6 @@ class ReadPair:
         if self.in_pair == 2:  # Is the full pair mapped?
             # Check if the reads are tandem
             if self._reads[0].orientation == self._reads[1].orientation:
-                self.f, self.r = None, None
                 self.orientation = "TANDEM"
                 return
 
@@ -202,7 +209,7 @@ class ReadPair:
         else:
             raise ValueError("More than two reads cannot be processed as a pair.")
 
-    def _check_read_names(self, readlist: list[Read]):
+    def _check_read_names(self, readlist: tuple[Read, ...]):
         """Check if the reads passed to the instance have the same read name.
 
         Args:
@@ -211,7 +218,10 @@ class ReadPair:
         Raises:
             ValueError: Read names do not match.
         """
-        name: str = readlist[0].name
+        name = readlist[0].name
+        if name is None:
+            raise ValueError("Read does not have a name.")
+
         for read in readlist:
             if read.name != name:
                 raise ValueError("Reads supplied do not seem to have the same name.")
@@ -223,9 +233,9 @@ class ReadPair:
         is "F" or "R", or errant."""
         if self.in_pair == 1:
             self.fragment_termini = (
-                (self.read.tail, None)
+                (self.read.tail, -1)
                 if self.orientation == "F"
-                else (None, self.read.tail)
+                else (-1, self.read.tail)
             )
 
         elif self.in_pair == 2:
@@ -233,7 +243,7 @@ class ReadPair:
                 self.fragment_termini = (self.f.tail, self.r.tail)
 
             elif self.orientation in ["RF", "TANDEM", "FFR", "RRF"]:
-                self.fragment_termini = (None, None)
+                self.fragment_termini = (-1, -1)
 
     def _compute_frag_length(self):
         """Determines fragment size spanned by this fragment"""
@@ -550,11 +560,15 @@ class AlignDat:
 
     def sum_cov(self):
         """Sum the coverage arrays into an attribute."""
-        self.summedcov = np.add(self.readcov, self.infercov)
-        self.summedcov = np.add(self.summedcov, self.clipcov)
+        self.summedcov: npt.NDArray[np.float64] = np.add(self.readcov, self.infercov)
+        self.summedcov: npt.NDArray[np.float64] = np.add(self.summedcov, self.clipcov)
 
     def is_coverage_threshold(
-        self, covtype: str, thresh: int, l: int = None, r: int = None
+        self,
+        covtype: str,
+        thresh: int,
+        l: Optional[int] = None,
+        r: Optional[int] = None,
     ):
         covpicker = {
             "read": self.readcov,
@@ -610,7 +624,7 @@ class SortedBAM:
         # in the genome/MAG it was sliced from. These bounds are used
         # to offset the reference start on position axes in plots down to 0.
         with open(ref_locus_dict_path, "r") as f:
-            self.ref_loc_dict: dict[list] = json.load(f)
+            self.ref_loc_dict: dict[str, list] = json.load(f)
 
         self._set_reference_list()
 

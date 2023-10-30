@@ -49,8 +49,8 @@ def main(ref_dir, threads):
             stdout=PIPE,
             stderr=PIPE,
         )
-    if call.returncode:
-        print("Failed:\n", call.stderr.decode("utf-8"))
-    else:
-        print("Success")
-        print(call.stdout.decode("utf-8"))
+        if call.returncode:
+            print(f"Failed:\n{call.stderr.decode('utf-8')}")
+        else:
+            print("Success")
+            print(call.stdout.decode("utf-8"))

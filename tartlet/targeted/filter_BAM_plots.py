@@ -1,3 +1,4 @@
+from typing import Optional
 import click
 import pickle
 import pandas as pd
@@ -10,11 +11,11 @@ from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat
 from tart.utils.mpi_context import BasicMPIContext
 from tart.utils.activity_inference import Candidate
-from tart.utils.activity_inference import is_interesting, has_candidate_peak
+from tart.utils.activity_inference import has_candidate_peak
 
 
 def _log_cand_charac(align_charac: dict, cand: Candidate):
-    align_charac["peak_width"] = cand.half_width * 2
+    align_charac["peak_width"] = cand.width
     align_charac["coverage_delta"] = cand.abs_cov_delta
     align_charac["coverage_delta_relative"] = cand.rel_cov_delta
     align_charac["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)
@@ -23,8 +24,8 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
     align_charac["from_riboswith_end_relative"] = cand.from_switch_end_relative
 
     ksRes = ks_2samp(cand.fragment_starts, cand.fragment_ends)
-    align_charac["ks_stat"] = ksRes.statistic
-    align_charac["ks_p"] = ksRes.pvalue
+    align_charac["ks_stat"] = ksRes.statistic  # type: ignore
+    align_charac["ks_p"] = ksRes.pvalue  # type: ignore
 
 
 @click.command()
@@ -72,7 +73,7 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
 )
 def exec_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, run_depr, conv):
     if run_depr:
-        depr_main(pick_root, out_dir, bin_size)
+        raise ValueError("No deprecated function to run")
 
     else:
         main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv)
@@ -133,7 +134,7 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
             continue
 
         lmarg, rmarg = ext_prop
-        cand: Candidate = has_candidate_peak(
+        cand: Optional[Candidate] = has_candidate_peak(
             alignDat, left_margin=lmarg, right_margin=rmarg
         )
         passfaildir = "fail" if cand is None else "pass"
@@ -172,6 +173,8 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
     charac_local_arr = comm.gather(charac_local, root=0)
 
     if rank == 0:
+        if charac_local_arr is None:
+            raise TypeError("Gather failed")
         characteristics = []
         for instance_arr in charac_local_arr:
             characteristics.extend(instance_arr)
@@ -181,79 +184,3 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
         # df.to_csv(f"{out_dir}/pass_rates.csv", index=False)
         df = pd.DataFrame(characteristics)
         df.to_csv(f"{out_dir}/characteristics.csv", index=False)
-
-
-def depr_main(pick_root, out_dir, bin_size):
-    # Determine MPI context
-    mp_con = BasicMPIContext()
-    comm = mp_con.comm
-    rank = mp_con.rank
-
-    # List of all pickled plots
-    if rank == 0:
-        total_files = glob(f"{pick_root}/**/*.p", recursive=True)
-
-    else:
-        total_files = None
-
-    total_files = comm.bcast(total_files, root=0)
-
-    mp_con.set_full_list(total_files)
-    worker_list = mp_con.generate_worker_list()
-
-    # kernel = gen_kernel(kernel_size=41, std_dev=5)
-
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    # Keeps track of which plots filtered through
-    pass_rate_local = defaultdict(list)
-
-    for pick_file in worker_list:
-        with open(pick_file, "rb") as f:
-            alignDat: AlignDat = pickle.load(f)
-
-        # Check whether there are enough reads to proceed.
-        # This needs to be done to avoid clutter in the results
-        # that failed the filer
-        if max(alignDat.readcov) < 50:
-            continue
-
-        isActive = is_interesting(alignDat, windowfrac=0.2, threshtol=0.2)
-        passfaildir = "pass" if isActive else "fail"
-
-        # Save path formation
-        ref = Path(pick_file[:-2]).name
-
-        # Riboswitch class name
-        targetname = Path(pick_file).parts[-3]
-
-        # Tally pass vs fail
-        pass_rate_local[ref].append(isActive)
-
-        core_sample = Path(pick_file).parts[-2]
-        save_path = out_dir.joinpath(passfaildir, f"{core_sample}#{ref}.png")
-
-        save_path.parent.mkdir(exist_ok=True, parents=True)
-
-        alignDat.bin_rawends(bin_size=bin_size)
-
-        CoveragePlot(alignDat, [40, 40]).default(save_path)
-
-    charac_local_arr = comm.gather(pass_rate_local, root=0)
-
-    if rank == 0:
-        pass_rates = defaultdict(list)
-        for instance_dict in charac_local_arr:
-            for key, val in instance_dict.items():
-                pass_rates[key].extend(val)
-
-        # Output pass rates to file
-        classes = []
-        rates = []
-        for key, val in pass_rates.items():
-            classes.append(key)
-            rates.append(sum(val) / len(val))
-
-        df = pd.DataFrame({"target_name": classes, "pass_rate": rates})
-        df.to_csv(f"{out_dir}/pass_rates.csv", index=False)

@@ -150,11 +150,11 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
         alignDat.bin_rawends(bin_size=bin_size)
 
         # We still want to see a large region around the switch in the plots
-        lmarg = 1.0 if lmarg < 1.0 else lmarg
-        rmarg = 1.0 if rmarg < 1.0 else rmarg
+        lplot = 1.0 if lmarg < 1.0 else lmarg
+        rplot = 1.0 if rmarg < 1.0 else rmarg
 
-        lbuff = int(switch_size * lmarg)
-        rbuff = int(switch_size * rmarg)
+        lbuff = int(switch_size * lplot)
+        rbuff = int(switch_size * rplot)
         end_buffers = [lbuff, rbuff]
 
         CoveragePlot(alignDat, end_buffers).default(save_path)

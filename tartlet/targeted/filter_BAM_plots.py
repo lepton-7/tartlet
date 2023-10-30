@@ -132,7 +132,7 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop):
         )
         passfaildir = "fail" if cand is None else "pass"
         align_charac["decision"] = passfaildir
-        save_path = out_dir.joinpath(passfaildir, f"{transcriptome}#{ref}.png")
+        save_path = out_dir.joinpath(passfaildir, f"{ref}#{transcriptome}.png")
 
         if cand is None:
             align_charac["decision_note"] = "No suitable candidates"

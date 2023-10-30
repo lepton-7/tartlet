@@ -1,4 +1,6 @@
+from typing import Optional
 import numpy as np
+import numpy.typing as npt
 import operator
 
 from math import ceil, isclose
@@ -11,94 +13,96 @@ class Peak:
 
     def __init__(
         self,
-        from_switch_end=None,
-        center=None,
-        height=None,
-        half_width=None,
-        switch_end=None,
+        summit: int,
+        height: float,
+        from_switch_end: Optional[int] = None,
+        left: Optional[int] = None,
+        right: Optional[int] = None,
+        switch_end: Optional[int] = None,
     ):
-        self.switch_end = switch_end
-
-        self.from_switch_end = None
-        self.from_switch_end = (
-            center - switch_end if switch_end is not None else self.from_switch_end
-        )
-        self.from_switch_end = (
-            from_switch_end if from_switch_end is not None else self.from_switch_end
-        )
-
-        # Only really used when sorting in one downstream step
-        self.abs_from_switch_end = abs(self.from_switch_end)
-
-        self.center = center
+        self.summit = summit
         self.height = height
-        self.half_width = half_width
 
-    def find_half_width(self, source_arr):
-        """Find the half-max width of the peak from the source array.
+        if from_switch_end is not None:
+            self.from_switch_end = from_switch_end
+        elif switch_end is not None:
+            self.switch_end = switch_end
+            self.from_switch_end = summit - switch_end
+
+        if from_switch_end is not None or switch_end is not None:
+            # Only really used when sorting in one downstream step
+            self.abs_from_switch_end = abs(self.from_switch_end)
+
+        if left is not None:
+            self.left = left
+        if right is not None:
+            self.right = right
+
+    def find_bounds(self, source_arr):
+        """Find the region spanned by the peak in the source array.
 
         Args:
             source_arr (list or array): The source array containing the peak.
 
         Raises:
-            AttributeError: If the Peak object is not instantiated with the center.
-            AttributeError: If the Peak object is not instantiated with the height.
+            AttributeError: If the Peak object is not instantiated with its summit.
+            AttributeError: If the Peak object is not instantiated with its height.
 
         Returns:
-            bool: Whether the half-max width was successfully determined.
+            bool: Whether the bounds were successfully determined.
         """
-        if self.center is None:
+        if self.summit is None:
             raise AttributeError("Peak center needs to be defined")
 
         if self.height is None:
             raise AttributeError("Peak height needs to be defined")
 
-        halfmax = abs(self.height / 2)
-
-        i = 1
-        minReached = abs(source_arr[self.center])
+        il = self.summit
+        ir = self.summit
         checkLeft = True
         checkRight = True
-        while checkLeft or checkRight:
-            # Check if left descent valid
-            if checkLeft:
-                try:
-                    cur = abs(source_arr[self.center - i])
-                    prev = abs(source_arr[self.center - i + 1])
 
-                    if cur - prev <= 0:
-                        minReached = cur if cur < minReached else minReached
+        # Descend down the sides of the peak. The bounds include the
+        # monotonic region without crossing zero. This way, shoulders are
+        # split across neighbouring Peaks
+        while checkLeft:
+            il -= 1
+            # Outside array bounds
+            if il < 0:
+                break
+            # Monotonic
+            checkLeft = abs(source_arr[il]) < abs(source_arr[il + 1])
+            # Zero-crossing
+            checkLeft = checkLeft and source_arr[il] * source_arr[il + 1] > 0
+            # Value essentially 0
+            checkLeft = checkLeft and abs(source_arr[il]) > 0.1
 
-                    # Not descending anymore
-                    else:
-                        checkLeft = False
+        # Since left is the inclusive bound,
+        # account for the descent going too far by 1
+        il += 1
 
-                except IndexError:
-                    checkLeft = False
+        while checkRight:
+            ir += 1
+            # Outside array bounds
+            if il >= len(source_arr):
+                break
+            # Monotonic
+            checkRight = abs(source_arr[ir]) < abs(source_arr[ir - 1])
+            # Zero-crossing
+            checkRight = checkRight and source_arr[ir] * source_arr[ir - 1] > 0
+            # Value essentially 0
+            checkRight = checkRight and abs(source_arr[ir]) > 0.1
 
-            # Check if right descent valid
-            if checkRight:
-                try:
-                    cur = abs(source_arr[self.center + i])
-                    prev = abs(source_arr[self.center + i - 1])
+        # Only continue if the peak has valid bounds
+        if il < self.summit and ir > self.summit:
+            self.left = il
+            self.right = ir
+            self.width = self.right - self.left
 
-                    if cur - prev <= 0:
-                        minReached = cur if cur < minReached else minReached
+            return True
 
-                    # Not descending anymore
-                    else:
-                        checkLeft = False
-
-                except IndexError:
-                    checkRight = False
-
-            if minReached <= halfmax:
-                self.half_width = i * 2
-                return True
-
-            i += 1
-
-        return False
+        else:
+            return False
 
     def compare(self, peak: "Peak", heightMarg: float = 0.1, widthMarg: int = 4):
         """DEPRECATED
@@ -114,7 +118,7 @@ class Peak:
             bool: Whether the height and widths of the peak being compared fall wlthin the margins of this peak.
         """
         hprop = peak.height / self.height
-        wdiff = abs(self.half_width - peak.half_width)
+        wdiff = abs(self.width - peak.width)
 
         return (
             hprop > -1 - heightMarg and hprop < -1 + heightMarg and wdiff <= widthMarg
@@ -133,7 +137,7 @@ class Peak:
         this_ends = self.find_absolute_ends(source_arr)
         peak_ends = peak.find_absolute_ends(source_arr)
 
-        return (ks_2samp(this_ends, peak_ends), this_ends, peak_ends, peak.center)
+        return (ks_2samp(this_ends, peak_ends), this_ends, peak_ends, peak.summit)
 
     def find_absolute_ends(self, source_arr):
         """Finds the distribution of raw, unconvolved ends across the range of the peak.
@@ -148,17 +152,10 @@ class Peak:
             return self.abs_ends
 
         except AttributeError:
-            left = self.center - int(self.half_width)
-            right = self.center + int(self.half_width)
-
-            # Validate
-            left = 0 if left < 0 else left
-            right = len(source_arr) - 1 if right >= len(source_arr) else right
-
-            self.abs_ends = np.absolute(source_arr[left:right])
+            self.abs_ends = np.absolute(source_arr[self.left : self.right])
             return self.abs_ends
 
-    def find_absolute_coverage_delta(self, sumcov: list) -> int:
+    def find_absolute_coverage_delta(self, sumcov: npt.NDArray[np.float64]) -> int:
         """Computes the absolute change in the summed coverage between the start and end of the peak (center ± half-width).
 
         Returns:
@@ -168,17 +165,11 @@ class Peak:
             return self.abs_cov_delta
 
         except AttributeError:
-            left = self.center - int(self.half_width)
-            right = self.center + int(self.half_width)
-
-            # Validate
-            left = 0 if left < 0 else left
-            right = len(sumcov) - 1 if right >= len(sumcov) else right
-
-            self.abs_cov_delta = sumcov[right] - sumcov[left]
+            # Bounds are already validated when determined
+            self.abs_cov_delta = sumcov[self.right] - sumcov[self.left]
             return self.abs_cov_delta
 
-    def find_relative_coverage_delta(self, sumcov: list) -> float:
+    def find_relative_coverage_delta(self, sumcov: npt.NDArray[np.float64]) -> float:
         """Computes the change in summed coverage across the peak (center ± half-width) relative to the summed coverage at the lower bound (center - half-width) of the peak.
 
         Args:
@@ -190,10 +181,9 @@ class Peak:
         try:
             return self.rel_cov_delta
         except AttributeError:
-            l = self.center - int(self.half_width)
-            l = 0 if l < 0 else l
-
-            self.rel_cov_delta = self.find_absolute_coverage_delta(sumcov) / sumcov[l]
+            self.rel_cov_delta = (
+                self.find_absolute_coverage_delta(sumcov) / sumcov[self.left]
+            )
             return self.rel_cov_delta
 
     def set_frags_ending_at_peak(self, fragments: list[list[tuple]]):
@@ -205,13 +195,11 @@ class Peak:
                 that have an end location at that index.
         """
         # self.ending_frags: list[tuple] = []
-        starts = []
-        ends = []
-        left = self.center - int(self.half_width)
-        right = self.center + int(self.half_width)
+        starts: list[int] = []
+        ends: list[int] = []
 
         # Keep track of all the start and end positions
-        for col_list in fragments[left:right]:
+        for col_list in fragments[self.left : self.right]:
             for tup in col_list:
                 if tup[0] is not None:  # None-types break finding index offset
                     starts.append(tup[0])
@@ -258,9 +246,10 @@ class Candidate(Peak):
     ) -> None:
         super().__init__(
             from_switch_end=cand.from_switch_end,
-            center=cand.center,
+            summit=cand.summit,
             height=cand.height,
-            half_width=cand.half_width,
+            left=cand.left,
+            right=cand.right,
         )
 
         self.abs_cov_delta = cand.find_absolute_coverage_delta(alignDat.summedcov)
@@ -295,8 +284,8 @@ def find_peaks(arr, switch_end, l: int = 0, u: int = -1):
 
     for i in range(l + 1, u - 1):
         if abs(arr[i]) > abs(arr[i - 1]) and abs(arr[i]) > abs(arr[i + 1]):
-            peak = Peak(center=i, height=arr[i], switch_end=switch_end)
-            if peak.find_half_width(arr):
+            peak = Peak(summit=i, height=arr[i], switch_end=switch_end)
+            if peak.find_bounds(arr):
                 ret.append(peak)
 
     return ret
@@ -320,135 +309,7 @@ def _gen_kernel(kernel_size: int = 21, std_dev: float = 3.0):
     return kernel
 
 
-def check_cand_drop(
-    summedcov: list, switchreg: tuple, cand: Peak, stdev: int, minDrop: float
-):
-    """DEPRECATED
-
-    Checks whether coverage drop across (bounds determined by the standard
-    deviation of the convolution kernel used to process the raw ends array)
-    a candidate peak relative to the max coverage value in the riboswitch
-    region is over the given threshold.
-
-    Args:
-        cov (list): Coverage list.
-        switchreg (tuple): Riboswith bounds: (start, end)
-        cand (Peak): Candidate Peak.
-        stdev (int): Ends convolution kernel std dev.
-        minDrop (float): Minimum relative drop threshold.
-
-    Returns:
-        bool: True if relative drop across the Peak exceeds the drop threshold.
-    """
-
-    sstart, send = switchreg
-
-    interv = 2 * stdev
-    istart, iend = cand.center - interv, cand.center + interv
-
-    istart = 0 if istart < 0 else istart
-    iend = len(summedcov) - 1 if iend >= len(summedcov) else iend
-
-    diff = summedcov[istart] - summedcov[iend]
-    maxreads = max(summedcov[sstart:send])
-
-    return diff / maxreads > minDrop
-
-
-def is_interesting(
-    alignDat: AlignDat,
-    windowfrac: float = 0.15,
-    threshtol: float = 0.15,
-):
-    """
-    DEPRECATED
-
-    Determines whether the read alignment is indicative of transcriptionally active riboswitches.
-
-    Args:
-        alignDat (tuple): Alignment tuple for this reference:
-            ([read coverage, inferred frag cov, clipped cov], ends, (switch start, switch end))
-        windowfrac (float, optional): Window size on either side of riboswitch 3' as a fraction
-            of the total riboswitch size to check for fragment end peaks. Defaults to 15%.
-        threshtol (float, optional): Allowable fractional percentage margin when checking
-            if a peak height is close to the maximum peak height in the full
-            riboswitch + window region. Defaults to 0.15.
-
-    Returns:
-        bool: True if alignTuple is determined to be interesting. False if not.
-    """
-
-    # OPTIONS -----------------------------------------------------------------
-    kernel_size = 51
-    kernel_stdev = 5
-
-    minReadDrop = 0.3
-
-    peakHeightTol = 0.15
-    peakWidthMarg = 4
-    # -------------------------------------------------------------------------
-
-    kernel = _gen_kernel(kernel_size=kernel_size, std_dev=kernel_stdev)
-    alignDat.convolve_rawends(kernel)
-
-    # - strand riboswitches are reverse complemented during the reference generation,
-    # so the right end in the reference is still the 3' end
-    peaks = find_peaks(alignDat.convends)
-
-    switch_left = alignDat.switch_start
-    switch_right = alignDat.switch_end
-    switch_end = alignDat.switch_end
-
-    window = (int)((switch_right - switch_left) * windowfrac)
-    left, right = switch_end - window, switch_end + window
-
-    # Max peak from riboswitch 5' to the 3' window end
-    maxpeak = max(alignDat.convends[switch_left:right])
-
-    for i in range(len(peaks)):
-        cand: Peak = peaks[i]
-        keepcand = True
-        cand_stats = None
-
-        # The candidate is within the window and within the margin of the tallest peak
-        if (
-            cand.center >= left
-            and cand.center <= right
-            and isclose(cand.height, maxpeak, rel_tol=threshtol)
-            and check_cand_drop(
-                alignDat.summedcov,
-                (switch_left, switch_right),
-                cand,
-                kernel_stdev,
-                minDrop=minReadDrop,
-            )
-        ):
-            cand_stats = []
-            # Check if there is a similar mirrored peak
-            # anywhere in the region of interest.
-            # Only the frag start peaks prior to the candidate
-            # frag end peak needs to be checked.
-            for peak in peaks[:i]:
-                # If the preceding peak is far out of the read range
-                if peak.center < cand.center - 200:
-                    continue
-                # If there is a mirrored peak within margins,
-                # immediately disqualify
-                cand_stats.append(cand.compare_ks(peak, alignDat.convends))
-                if cand.compare(
-                    peak, heightMarg=peakHeightTol, widthMarg=peakWidthMarg
-                ):
-                    keepcand = False
-                    break
-
-            # This candidate does not have a mirrored peak
-            if keepcand:
-                return (True, cand_stats)
-
-    return (False, cand_stats)
-
-
-def coverage_delta_per_peak(peaks: list, sumcov: list):
+def coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
     """Helper function to find coverage deltas across a list of Peaks.
 
     Args:
@@ -462,9 +323,7 @@ def coverage_delta_per_peak(peaks: list, sumcov: list):
 
     for peak in peaks:
         peak: Peak
-        raw_cov_drop.append(
-            [peak.find_absolute_coverage_delta(sumcov), peak.half_width * 2]
-        )
+        raw_cov_drop.append([peak.find_absolute_coverage_delta(sumcov), peak.width])
 
     return raw_cov_drop
 

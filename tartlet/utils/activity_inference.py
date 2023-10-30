@@ -462,7 +462,9 @@ def coverage_delta_per_peak(peaks: list, sumcov: list):
 
     for peak in peaks:
         peak: Peak
-        raw_cov_drop.append(peak.find_absolute_coverage_delta(sumcov))
+        raw_cov_drop.append(
+            [peak.find_absolute_coverage_delta(sumcov), peak.half_width * 2]
+        )
 
     return raw_cov_drop
 
@@ -473,7 +475,7 @@ def peak_out_of_cov_delta(sorteddelta: list, i: int):
 
     Args:
         sorteddelta (list): List of deltas, ideally sorted increasingly by
-                            absolute distance pf the source Peak from the
+                            absolute distance of the source Peak from the
                             riboswitch end.
         i (int): Subject delta index in sorteddelta.
 
@@ -483,10 +485,14 @@ def peak_out_of_cov_delta(sorteddelta: list, i: int):
     """
     # Find coverage drops across peaks without cand
     cov_nocand = []
+    just_deltas = []
     cov_nocand.extend(sorteddelta[0:i])
     cov_nocand.extend(sorteddelta[i + 1 :])
 
-    return (sorteddelta[i] <= min(cov_nocand) and sorteddelta[i] < 0, cov_nocand)
+    return (
+        sorteddelta[i][0] <= min(x[0] for x in cov_nocand) and sorteddelta[i][0] < 0,
+        cov_nocand,
+    )
 
 
 def has_candidate_peak(

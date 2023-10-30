@@ -498,7 +498,7 @@ def peak_out_of_cov_delta(sorteddelta: list, i: int):
 def has_candidate_peak(
     alignDat: AlignDat,
     kernel_size: int = 51,
-    kernel_stdev: int = 5,
+    kernel_stdev: int = 3,
     left_margin=1.0,
     right_margin=1.0,
 ):

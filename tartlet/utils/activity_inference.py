@@ -103,7 +103,7 @@ class Peak:
         else:
             return False
 
-    def compare(self, peak: "Peak", heightMarg: float = 0.1, widthMarg: int = 4):
+    def __compare(self, peak: "Peak", heightMarg: float = 0.1, widthMarg: int = 4):
         """DEPRECATED
 
         Compares two peaks. Returns true if peaks match within the defined margins.
@@ -322,7 +322,9 @@ def coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
 
     for peak in peaks:
         peak: Peak
-        raw_cov_drop.append([peak.find_absolute_coverage_delta(sumcov), peak.width])
+        raw_cov_drop.append(
+            [peak.find_absolute_coverage_delta(sumcov), peak.width, peak.summit]
+        )
 
     return raw_cov_drop
 

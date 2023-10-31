@@ -1,9 +1,8 @@
-from typing import Optional
+import operator
 import numpy as np
 import numpy.typing as npt
-import operator
 
-from math import ceil, isclose
+from typing import Optional
 from scipy.stats import norm, ks_2samp
 from tart.utils.read_parsing import AlignDat
 

@@ -1,10 +1,10 @@
 import json
-from typing import Optional
 import pysam
 import numpy as np
 import numpy.typing as npt
 
 from click import echo
+from typing import Optional
 from collections import defaultdict
 
 

@@ -1,11 +1,10 @@
-from typing import Optional
 import click
 import pickle
 import pandas as pd
 
 from glob import glob
 from pathlib import Path
-from collections import defaultdict
+from typing import Optional
 from scipy.stats import ks_2samp
 from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat

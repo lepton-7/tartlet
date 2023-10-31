@@ -160,13 +160,9 @@ class Peak:
         Returns:
             int: Absolute change in summed coverage across the peak.
         """
-        try:
-            return self.abs_cov_delta
 
-        except AttributeError:
-            # Bounds are already validated when determined
-            self.abs_cov_delta = sumcov[self.right] - sumcov[self.left]
-            return self.abs_cov_delta
+        # Bounds are already validated when determined
+        return sumcov[self.right] - sumcov[self.left]
 
     def find_relative_coverage_delta(self, sumcov: npt.NDArray[np.float64]) -> float:
         """Computes the change in summed coverage across the peak (center ± half-width) relative to the summed coverage at the lower bound (center - half-width) of the peak.
@@ -177,13 +173,8 @@ class Peak:
         Returns:
             float: Change in summed coverage across the peak relative to coverage at the start of the peak.
         """
-        try:
-            return self.rel_cov_delta
-        except AttributeError:
-            self.rel_cov_delta = (
-                self.find_absolute_coverage_delta(sumcov) / sumcov[self.left]
-            )
-            return self.rel_cov_delta
+
+        return self.find_absolute_coverage_delta(sumcov) / sumcov[self.left]
 
     def set_frags_ending_at_peak(self, fragments: list[list[tuple]]):
         """Set attributes for the distribution of start positions and end positions of fragments that end in this Peak.
@@ -251,8 +242,8 @@ class Candidate(Peak):
             right=cand.right,
         )
 
-        self.abs_cov_delta = cand.find_absolute_coverage_delta(alignDat.summedcov)
-        self.rel_cov_delta = cand.find_relative_coverage_delta(alignDat.summedcov)
+        self.abs_cov_delta = self.find_absolute_coverage_delta(alignDat.summedcov)
+        self.rel_cov_delta = self.find_relative_coverage_delta(alignDat.summedcov)
 
         self.switch_size = switch_size
         self.from_switch_end_relative = self.from_switch_end / self.switch_size
@@ -277,7 +268,7 @@ def find_peaks(arr, switch_end, l: int = 0, u: int = -1):
     Returns:
         list: List of valid Peak objects found within the specified bounds.
     """
-    ret = []
+    ret: list[Peak] = []
 
     u = len(arr) if u < 0 else u
 
@@ -318,7 +309,7 @@ def coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
     Returns:
         list: Absolute coverage drop for each peak in the same order as peaks.
     """
-    raw_cov_drop = []
+    raw_cov_drop: list[list[int]] = []
 
     for peak in peaks:
         peak: Peak
@@ -329,7 +320,7 @@ def coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
     return raw_cov_drop
 
 
-def peak_out_of_cov_delta(sorteddelta: list, i: int):
+def peak_out_of_cov_delta(sorteddelta: list[list[int]], i: int):
     """Checks whether the coverage delta of a given element is outside the
     range of deltas constituted by the rest of the list without the element being tested.
 
@@ -350,7 +341,7 @@ def peak_out_of_cov_delta(sorteddelta: list, i: int):
     cov_nocand.extend(sorteddelta[i + 1 :])
 
     return (
-        sorteddelta[i][0] <= min(x[0] for x in cov_nocand) and sorteddelta[i][0] < 0,
+        sorteddelta[i][0] <= min([x[0] for x in cov_nocand]) and sorteddelta[i][0] < 0,
         cov_nocand,
     )
 

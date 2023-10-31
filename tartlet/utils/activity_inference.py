@@ -32,10 +32,10 @@ class Peak:
             # Only really used when sorting in one downstream step
             self.abs_from_switch_end = abs(self.from_switch_end)
 
-        if left is not None:
+        if left is not None and right is not None:
             self.left = left
-        if right is not None:
             self.right = right
+            self.width = right - left
 
     def find_bounds(self, source_arr):
         """Find the region spanned by the peak in the source array.

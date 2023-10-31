@@ -268,11 +268,20 @@ class AlignDat:
         self.ref = ref
         self.ref_length = reflength
 
-        self.readcov = np.zeros(reflength)
-        self.infercov = np.zeros(reflength)
-        self.overlapcov = np.zeros(reflength)
-        self.clipcov = np.zeros(reflength)
-        self.terminalcov = np.zeros(reflength)
+        self.__coverage_types = [
+            "readcov",
+            "infercov",
+            "overlapcov",
+            "clipcov",
+            "terminalcov",
+        ]
+
+        # This is for easy future splitting of coverage types
+        for covtype in self.__coverage_types:
+            self.__setattr__(covtype, np.zeros(reflength))
+
+        # Define now; populate later
+        self.summedcov = np.zeros(reflength)
 
         # Stores terminal positions for the likely fragment spanned by each ReadPair.
         # Tuples with the same right terminal position are collected into lists.
@@ -560,8 +569,8 @@ class AlignDat:
 
     def sum_cov(self):
         """Sum the coverage arrays into an attribute."""
-        self.summedcov: npt.NDArray[np.float64] = np.add(self.readcov, self.infercov)
-        self.summedcov: npt.NDArray[np.float64] = np.add(self.summedcov, self.clipcov)
+        for covtype in self.__coverage_types:
+            self.summedcov = np.add(self.summedcov, self.__getattribute__(covtype))
 
     def is_coverage_threshold(
         self,

@@ -276,6 +276,13 @@ class AlignDat:
             "terminalcov",
         ]
 
+        # Appease checkers
+        self.readcov: npt.NDArray[np.float64]
+        self.infercov: npt.NDArray[np.float64]
+        self.overlapcov: npt.NDArray[np.float64]
+        self.clipcov: npt.NDArray[np.float64]
+        self.terminalcov: npt.NDArray[np.float64]
+
         # This is for easy future splitting of coverage types
         for covtype in self.__coverage_types:
             self.__setattr__(covtype, np.zeros(reflength))

@@ -374,13 +374,14 @@ def has_candidate_peak(
     # Record how coverage is changed by identified peaks in the region of interest
     cov_delta = coverage_delta_per_peak(close_peaks, alignDat.summedcov)
 
+    toRet: list[Candidate] = []
     for i, cand in enumerate(close_peaks):
         is_sig, nocand_cov_delta = peak_out_of_cov_delta(cov_delta, i)
         if is_sig:
             cand_obj = Candidate(cand, switch_size, nocand_cov_delta, alignDat)
-            return cand_obj
+            toRet.append(cand_obj)
 
         else:
             continue
 
-    return None
+    return toRet

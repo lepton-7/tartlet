@@ -29,6 +29,30 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
     align_charac["ks_p"] = ksRes.pvalue  # type: ignore
 
 
+def _process_candidate_list(
+    candlist: list[Candidate],
+    align_charac: dict,
+    charac_local: list,
+    ref: str,
+    transcriptome: str,
+):
+    if len(candlist) == 0:
+        align_charac["decision_note"] = "No suitable candidates"
+        align_charac["decision"] = "fail"
+        charac_local.append(align_charac)
+        return "fail"
+
+    for cand in candlist:
+        align_charac = {}
+        align_charac["rowid"] = ref
+        align_charac["transcriptome"] = str(transcriptome)
+        _log_cand_charac(align_charac, cand)
+        align_charac["decision"] = "pass"
+        charac_local.append(align_charac)
+
+    return "pass"
+
+
 @click.command()
 @click.option(
     "-i",
@@ -135,22 +159,14 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
             continue
 
         lmarg, rmarg = ext_prop
-        cand: Optional[Candidate] = has_candidate_peak(
+        candlist: list[Candidate] = has_candidate_peak(
             alignDat, left_margin=lmarg, right_margin=rmarg
         )
-        passfaildir = "fail" if cand is None else "pass"
-        align_charac["decision"] = passfaildir
+
+        passfaildir = _process_candidate_list(
+            candlist, align_charac, charac_local, ref, transcriptome
+        )
         save_path = out_dir.joinpath(passfaildir, f"{ref}#{transcriptome}.png")
-
-        if cand is None:
-            align_charac["decision_note"] = "No suitable candidates"
-            charac_local.append(align_charac)
-            continue
-
-        # Extract candidate characteristics and organise in-place
-        _log_cand_charac(align_charac, cand)
-        charac_local.append(align_charac)
-
         save_path.parent.mkdir(exist_ok=True, parents=True)
 
         # Calculate and set info for binned raw ends

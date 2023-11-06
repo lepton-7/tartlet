@@ -61,6 +61,7 @@ def _process_candidate_list(
     _log_cand_charac(align_charac, candlist[0])
     decision = default_check(candlist[0])
     align_charac["decision"] = decision
+    align_charac["decision_note"] = candlist[0].failnote
     charac_local.append(align_charac)
 
     return "fail"

@@ -8,7 +8,7 @@ def default_check(cand: Candidate):
         issues.append("Too far from end")
     if cand.rel_cov_delta > 0.2:
         issues.append("Small drop")
-    if cand.symks_stat > 0.05:
+    if cand.symks_pval > 0.05:
         issues.append("Symmetry check failed")
 
     if len(issues) > 0:

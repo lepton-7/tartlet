@@ -4,7 +4,6 @@ import pandas as pd
 
 from glob import glob
 from pathlib import Path
-from typing import Optional
 from scipy.stats import ks_2samp
 from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat
@@ -15,9 +14,10 @@ from tart.utils.activity_inference import has_candidate_peak
 
 def _log_cand_charac(align_charac: dict, cand: Candidate):
     align_charac["coverage_delta"] = cand.abs_cov_delta
+    align_charac["coverage_delta_pval"] = cand.coverage_drop_pvalue
     align_charac["peak_width"] = cand.width
-    align_charac["peak_summit"] = cand.summit
-    align_charac["peak_l/r"] = (cand.left, cand.right)
+    # align_charac["peak_summit"] = cand.summit
+    # align_charac["peak_l/r"] = (cand.left, cand.right)
     align_charac["coverage_delta_relative"] = cand.rel_cov_delta
     align_charac["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)
 

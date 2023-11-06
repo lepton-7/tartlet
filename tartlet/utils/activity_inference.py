@@ -3,8 +3,8 @@ import numpy as np
 import numpy.typing as npt
 
 from typing import Optional
-from scipy.stats import norm, ks_2samp
 from tart.utils.read_parsing import AlignDat
+from scipy.stats import norm, ks_2samp, multivariate_normal
 
 
 class Peak:
@@ -232,6 +232,7 @@ class Candidate(Peak):
         cand: Peak,
         switch_size: int,
         nocand_cov_delta: list,
+        cov_drop_pval: float,
         alignDat: AlignDat,
     ) -> None:
         super().__init__(
@@ -249,6 +250,7 @@ class Candidate(Peak):
         self.from_switch_end_relative = self.from_switch_end / self.switch_size
 
         self.coverage_delta_noise = nocand_cov_delta
+        self.coverage_drop_pvalue = cov_drop_pval
 
         # Find start position and end position distributions for fragments
         # that ended in this candidate.
@@ -313,15 +315,15 @@ def coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
 
     for peak in peaks:
         peak: Peak
-        raw_cov_drop.append(
-            [peak.find_absolute_coverage_delta(sumcov), peak.width, peak.summit]
-        )
+        raw_cov_drop.append([peak.find_absolute_coverage_delta(sumcov), peak.width])
 
     return raw_cov_drop
 
 
 def peak_out_of_cov_delta(sorteddelta: list[list[int]], i: int):
-    """Checks whether the coverage delta of a given element is outside the
+    """DEPRECATED
+
+    Checks whether the coverage delta of a given element is outside the
     range of deltas constituted by the rest of the list without the element being tested.
 
     Args:
@@ -344,6 +346,28 @@ def peak_out_of_cov_delta(sorteddelta: list[list[int]], i: int):
         sorteddelta[i][0] <= min([x[0] for x in cov_nocand]) and sorteddelta[i][0] < 0,
         cov_nocand,
     )
+
+
+def peak_significance(sorteddelta: list[list[int]], i: int) -> tuple[float, list]:
+    """Sets up a multivariate Gaussian using the coverage drop and peak width,
+    and calculate the p-value of sampling the peak from the given distribution.
+
+    Args:
+        sorteddelta (list[list[int]]): List of deltas, ideally sorted increasingly by
+                            absolute distance of the source Peak from the
+                            riboswitch end.
+        i (int): Subject delta index in sorteddelta.
+
+    Returns:
+        _type_: _description_
+    """
+    cov_nocand = []
+    cov_nocand.extend(sorteddelta[0:i])
+    cov_nocand.extend(sorteddelta[i + 1 :])
+
+    m = np.mean(cov_nocand, axis=0)
+    sd = np.cov(cov_nocand, rowvar=0)  # type: ignore
+    return (multivariate_normal(mean=m, cov=sd).cdf(sorteddelta[i]), cov_nocand)
 
 
 def has_candidate_peak(
@@ -376,9 +400,9 @@ def has_candidate_peak(
 
     toRet: list[Candidate] = []
     for i, cand in enumerate(close_peaks):
-        is_sig, nocand_cov_delta = peak_out_of_cov_delta(cov_delta, i)
-        if is_sig:
-            cand_obj = Candidate(cand, switch_size, nocand_cov_delta, alignDat)
+        pval, nocand_cov_delta = peak_significance(cov_delta, i)
+        if pval <= 0.05:
+            cand_obj = Candidate(cand, switch_size, nocand_cov_delta, pval, alignDat)
             toRet.append(cand_obj)
 
         else:

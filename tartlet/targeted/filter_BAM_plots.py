@@ -46,21 +46,21 @@ def _process_candidate_list(
         align_charac = {}
         align_charac["rowid"] = ref
         align_charac["transcriptome"] = str(transcriptome)
-        _log_cand_charac(align_charac, cand)
         decision = default_check(cand)
         align_charac["decision"] = decision
 
         if decision == "pass":
             charac_local.append(align_charac)
+            _log_cand_charac(align_charac, cand)
             return decision
 
     # Getting to this point means there were no passes
     align_charac = {}
     align_charac["rowid"] = ref
     align_charac["transcriptome"] = str(transcriptome)
-    _log_cand_charac(align_charac, candlist[0])
     decision = default_check(candlist[0])
     align_charac["decision"] = decision
+    _log_cand_charac(align_charac, candlist[0])
     align_charac["decision_note"] = candlist[0].failnote
     charac_local.append(align_charac)
 

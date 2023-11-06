@@ -219,6 +219,14 @@ class Peak:
             self.fragment_starts = [0]
             self.fragment_ends = [0]
 
+    def end_symmetry_stat(self):
+        """Do a 2-sample ks test between the fragment start and end positions
+        to check for symmetry."""
+
+        ksRes = ks_2samp(self.fragment_starts, self.fragment_ends)
+        self.symks_stat = ksRes.statistic  # type: ignore
+        self.symks_pval = ksRes.pvalue  # type: ignore
+
 
 class Candidate(Peak):
     """Wraps the relevant information to return as a candidate for transcription termination activity.
@@ -252,9 +260,13 @@ class Candidate(Peak):
         self.coverage_delta_noise = nocand_cov_delta
         self.coverage_drop_pvalue = cov_drop_pval
 
+        self.failnote: str = ""
+
         # Find start position and end position distributions for fragments
         # that ended in this candidate.
         self.set_frags_ending_at_peak(alignDat.fragments)
+
+        self.end_symmetry_stat()
 
 
 def find_peaks(arr, switch_end, l: int = 0, u: int = -1):

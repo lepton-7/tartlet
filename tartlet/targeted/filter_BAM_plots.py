@@ -9,14 +9,15 @@ from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat
 from tart.utils.mpi_context import BasicMPIContext
 from tart.utils.activity_inference import Candidate
+from tart.utils.filter_functions import default_check
 from tart.utils.activity_inference import has_candidate_peak
 
 
 def _log_cand_charac(align_charac: dict, cand: Candidate):
     align_charac["coverage_delta"] = cand.abs_cov_delta
     align_charac["coverage_delta_pval"] = cand.coverage_drop_pvalue
+    align_charac["peak_summit"] = cand.summit
     align_charac["peak_width"] = cand.width
-    # align_charac["peak_summit"] = cand.summit
     # align_charac["peak_l/r"] = (cand.left, cand.right)
     align_charac["coverage_delta_relative"] = cand.rel_cov_delta
     align_charac["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)
@@ -24,9 +25,8 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
     align_charac["from_riboswith_end"] = cand.from_switch_end
     align_charac["from_riboswith_end_relative"] = cand.from_switch_end_relative
 
-    ksRes = ks_2samp(cand.fragment_starts, cand.fragment_ends)
-    align_charac["ks_stat"] = ksRes.statistic  # type: ignore
-    align_charac["ks_p"] = ksRes.pvalue  # type: ignore
+    align_charac["ks_stat"] = cand.symks_stat
+    align_charac["ks_p"] = cand.symks_pval
 
 
 def _process_candidate_list(
@@ -47,10 +47,23 @@ def _process_candidate_list(
         align_charac["rowid"] = ref
         align_charac["transcriptome"] = str(transcriptome)
         _log_cand_charac(align_charac, cand)
-        align_charac["decision"] = "pass"
-        charac_local.append(align_charac)
+        decision = default_check(cand)
+        align_charac["decision"] = decision
 
-    return "pass"
+        if decision == "pass":
+            charac_local.append(align_charac)
+            return decision
+
+    # Getting to this point means there were no passes
+    align_charac = {}
+    align_charac["rowid"] = ref
+    align_charac["transcriptome"] = str(transcriptome)
+    _log_cand_charac(align_charac, candlist[0])
+    decision = default_check(candlist[0])
+    align_charac["decision"] = decision
+    charac_local.append(align_charac)
+
+    return "fail"
 
 
 @click.command()

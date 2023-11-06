@@ -27,6 +27,7 @@ def _log_cand_charac(align_charac: dict, cand: Candidate):
 
     align_charac["ks_stat"] = cand.symks_stat
     align_charac["ks_p"] = cand.symks_pval
+    align_charac["decision_note"] = cand.note
 
 
 def _process_candidate_list(
@@ -61,7 +62,6 @@ def _process_candidate_list(
     decision = default_check(candlist[0])
     align_charac["decision"] = decision
     _log_cand_charac(align_charac, candlist[0])
-    align_charac["decision_note"] = candlist[0].failnote
     charac_local.append(align_charac)
 
     return "fail"

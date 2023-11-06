@@ -260,7 +260,7 @@ class Candidate(Peak):
         self.coverage_delta_noise = nocand_cov_delta
         self.coverage_drop_pvalue = cov_drop_pval
 
-        self.failnote: str = ""
+        self.note: str = ""
 
         # Find start position and end position distributions for fragments
         # that ended in this candidate.

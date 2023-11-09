@@ -2,7 +2,7 @@
 
 Finds transcriptional riboswitch activity in RNA-seq data.
 
-## Validation
+## Transcriptomes
 
 TaRT is validated on published transcriptomic and metatranscriptomic datasets. Datasets are downloaded with  `validation/rna_seq/download_SRAs.sh` using compilation lists of SRA run IDs.
 
@@ -47,6 +47,22 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 **g_hirsutum_sun2023_acc**: Run accession list for C O T T O N *Gossypium hirsutum* from [GSE182982](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE182982).
 
 **g_hirsutum_mei2022_acc**: Run accession list for C O T T O N *Gossypium hirsutum* from [GSE206663](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE206663). >36Gbyte total; do not use unless the one above is insufficient.
+
+**x_albi_wimmer2023_acc**: Run accession list for *Xanthomonas albilineans* from [GSE229478](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE229478).
+
+**p_salmo_gabriela2023_acc**: Run accession list for *Piscirickettsia salmonis* from [GSE235725](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235725). List only captures 4 out of the 9 runs.
+
+**s_sanguinis_puccio2022_acc**: Run accession list for *Streptococcus sanguinis SK36* from [Puccio 2022](<https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8844241/>) ([GSE174672](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE174672)).
+
+**p_cholor_aureo3084_wang2016_acc**: Run accession list for *Pseudomonas chlororaphis* subsp. *aureofaciens* 30-84 from [Wang 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4727817/) ([GSE61200](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE61200)).
+
+**b_anth_corsi2020_acc**: Run accession list for *Bacillus anthracis* from [Corsi 2020](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7843513/) ([GSE152356](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152356)). List captures 6 runs from the "Parent" genotype and 3/6 for each of the others.
+
+**n_gonorr_zachary2021_acc**: Run accession list for *Neisseria gonorrhoeae* from [Zachary 2021](https://pubmed.ncbi.nlm.nih.gov/34515630/) ([GSE177032](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE177032)).
+
+**a_kunk_seeger2023_acc**: Run accession list for *Apilactobacillus kunkeei* from [Seeger 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10496945/) ([GSE205998](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205998)).
+
+**k_pneum_liu2023_acc**: Run accession list for *Klebsiella pneumoniae* from [GSE229867](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE229867).
 
 ## Miscellaneous
 

@@ -24,3 +24,4 @@ validation/rna_seq/s_coelicolor/*
 validation/alignment/outputs/**/switch_seqs_delta*
 
 **/.vscode
+*__ex__.*

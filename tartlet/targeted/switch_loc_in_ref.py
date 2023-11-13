@@ -154,11 +154,11 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
                 seqs_local.update({rowid: (start, end)})
 
     seqs_arr = comm.gather(seqs_local, root=0)
-    if seqs_arr is None:
-        raise ValueError("Gather failed.")
 
     # Consolidate on root thread
     if rank == 0:
+        if seqs_arr is None:
+            raise ValueError("Gather failed.")
         print("Completed gather on 0")
         # defaultdict makes merging worker dicts trivial
         seqs_ledger = defaultdict()

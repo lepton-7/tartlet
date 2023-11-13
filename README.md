@@ -66,6 +66,10 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **k_pneum_liu2023_acc**: Run accession list for *Klebsiella pneumoniae* from [GSE229867](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE229867) 2.1GB.
 
+**s_enter_typh_kant2022_acc**: Run accession list for *Salmonella enterica* subsp. enterica serovar Typhimurium from [GSE203342](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE203342) 13.9GB.
+
+**a_baum_pokhrel2023_acc**: Run accession list for *Acinetobacter baumannii* from [GSE183334](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE183334) 3.8GB.
+
 ## Miscellaneous
 
 Start an interactive shell on pitzer:

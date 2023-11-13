@@ -25,6 +25,7 @@ validation/rna_seq/k_pneum/*
 validation/rna_seq/x_albi/*
 validation/rna_seq/s_sanguinis/*
 validation/rna_seq/s_enter_typh/*
+validation/rna_seq/a_baum/*
 
 validation/alignment/outputs/**/switch_seqs_delta*
 

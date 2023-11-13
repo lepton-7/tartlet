@@ -20,6 +20,9 @@ validation/rna_seq/b_theta/*
 validation/rna_seq/c_vibrioides/*
 validation/rna_seq/s_spcc6803/*
 validation/rna_seq/s_coelicolor/*
+validation/rna_seq/a_kunk/*
+validation/rna_seq/k_pneum/*
+validation/rna_seq/x_albi/*
 
 validation/alignment/outputs/**/switch_seqs_delta*
 

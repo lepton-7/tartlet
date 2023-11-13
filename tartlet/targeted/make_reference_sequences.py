@@ -95,7 +95,6 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
         print(f"Started {size} instance(s)")
 
     local_path_list = mp_con.generate_worker_list()
-    print(f"{local_path_list} for instance {rank}. {mp_con.is_active}")
 
     # Setup the local dictionary that stores the sequences
 

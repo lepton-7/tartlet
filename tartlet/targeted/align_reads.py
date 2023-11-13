@@ -22,7 +22,7 @@ from tart.utils.utils import print
     help="Directory to place SAM output. SAM files will be further organised into subdirectories.",
 )
 @click.option(
-    "--readset-name",
+    "--readpair-name",
     default=None,
     show_default=True,
     help="Read pair that is added to SAM filename. If left undefined, will be the first-in-mate filename",
@@ -61,19 +61,15 @@ def main(ref_dir, m1, m2, out_dir, readpair_name, hisat2):
                 samout_path,
                 *hisat2,  # options fed through from function call
             ],
-            stdout=PIPE,
-            stderr=PIPE,
+            capture_output=True,
         )
-        if call.returncode:
-            print(
-                f"Failed:\n{call.stderr.decode('utf-8')}",
-            )
-
-        else:
-            print(call.stdout.decode("utf-8"))
-
+        print(
+            f"{call.stderr.decode('utf-8')}",
+        )
+        # print(f"{call.stdout.decode('utf-8')}")
         print(
             "\n---------------------------------------------------------------------\n"
         )
 
     print("Done")
+    raise SystemExit(0)

@@ -95,6 +95,7 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
         print(f"Started {size} instance(s)")
 
     local_path_list = mp_con.generate_worker_list()
+    print(f"{local_path_list} for instance {rank}. {mp_con.is_active}")
 
     # Setup the local dictionary that stores the sequences
 
@@ -161,14 +162,16 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
                 seqs_local[classname].update({rowid: switch})
 
     seqs_arr = comm.gather(seqs_local, root=0)
-    if seqs_arr is None:
-        raise ValueError("Gather failed.")
+
+    # defaultdict makes merging worker dicts trivial
+    seqs_ledger = defaultdict(dict)
 
     # Consolidate on root thread
     if rank == 0:
-        print("Completed gather on 0")
-        # defaultdict makes merging worker dicts trivial
-        seqs_ledger = defaultdict(dict)
+        if seqs_arr is None:
+            raise ValueError("Gather failed.")
+
+        print(f"Completed gather on 0")
 
         for instance_dict in seqs_arr:
             for switchclass, seqs in instance_dict.items():
@@ -214,8 +217,8 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
                 classname = comm.recv(source=0, tag=10)  # type: ignore
                 sub_d = comm.recv(source=0, tag=100)  # type: ignore
 
-        # Write riboswitch sequences to disk
-        write_step(classname, sub_d)  # type: ignore
+                # Write riboswitch sequences to disk
+                write_step(classname, sub_d)  # type: ignore
 
     def singlethreaded_writeout(seqs_ledger):
         if rank == 0:

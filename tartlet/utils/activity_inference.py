@@ -379,11 +379,11 @@ def peak_significance(sorteddelta: list[list[int]], i: int) -> tuple[float, list
 
     m = np.mean(cov_nocand, axis=0)
     sd = np.cov(cov_nocand, rowvar=0)  # type: ignore
-    try:
-        return (multivariate_normal(mean=m, cov=sd).cdf(sorteddelta[i]), cov_nocand)
-    except:
-        print(f"multivariate failed for {cov_nocand}")
-        return (1, [])
+
+    return (
+        multivariate_normal(mean=m, cov=sd, allow_singular=True).cdf(sorteddelta[i]),
+        cov_nocand,
+    )
 
 
 def has_candidate_peak(

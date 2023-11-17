@@ -1,10 +1,10 @@
 import click
 import pickle
 import pandas as pd
+import tarfile
 
 from glob import glob
 from pathlib import Path
-from scipy.stats import ks_2samp
 from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat
 from tart.utils.mpi_context import BasicMPIContext
@@ -72,7 +72,7 @@ def _process_candidate_list(
     "-i",
     "--pick-root",
     required=True,
-    help="Directory root for pickled outputs. Same directory as the parser output.",
+    help="Gunzipped archive for pickled outputs. Same file as the parser output.",
 )
 @click.option(
     "-o",
@@ -118,7 +118,7 @@ def exec_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, run_depr, c
         main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv)
 
 
-def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
+def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv):
     # Determine MPI context
     mp_con = BasicMPIContext()
     comm = mp_con.comm
@@ -126,15 +126,24 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
 
     # List of all pickled alignment data
     if rank == 0:
-        total_files = glob(f"{pick_root}/**/*.p", recursive=True)
+        try:
+            with tarfile.open(pick_root, "r:gz") as picktar:
+                total_files = [x.name for x in picktar.getmembers() if x.isfile()]
+        except KeyError:
+            print(f"Pickled data root {pick_root} not found.")
+            total_files = None
 
     else:
         total_files = None
 
     total_files = comm.bcast(total_files, root=0)
 
+    # Pickle root was not found
+    if total_files is None:
+        raise SystemExit(0)
+
     mp_con.set_full_list(total_files)
-    worker_list = mp_con.generate_worker_list()
+    worker_list: list[str] = mp_con.generate_worker_list()
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -144,9 +153,16 @@ def main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv):
 
     # First pass; find suitable candidates if present
     for pick_file in worker_list:
-        # Load in the alignment data object
-        with open(pick_file, "rb") as f:
-            alignDat: AlignDat = pickle.load(f)
+        # Load in the alignment data object from the archive
+        with tarfile.open(pick_root, "r:gz") as picktar:
+            try:
+                with picktar.extractfile(pick_file) as f:  # type: ignore
+                    alignDat: AlignDat = pickle.load(f)
+            except KeyError:
+                print(
+                    f"{pick_file} not found in archive {pick_root} on worker rank {rank}"
+                )
+                continue
 
         switch_size = alignDat.switch_end - alignDat.switch_start
 

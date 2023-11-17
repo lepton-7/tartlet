@@ -101,8 +101,8 @@ def main(
 
     if mp_con.rank == 0 and done_workers is not None:
         if len(done_workers) == mp_con.size:
-            tarpath = out_dir.parent.joinpath(f"{out_dir.name}.tar")
-            with tf.open(tarpath, "w") as picktar:
+            tarpath = out_dir.parent.joinpath(f"{out_dir.name}.tar.gz")
+            with tf.open(tarpath, "w:gz") as picktar:
                 print(f"Archiving pickled data")
                 picktar.add(out_dir)
 

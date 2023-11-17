@@ -1,6 +1,8 @@
 import click
 import pickle
+import tarfile as tf
 
+from shutil import rmtree
 from glob import glob
 from pathlib import Path
 from tart.utils.plotting import CoveragePlot
@@ -93,3 +95,21 @@ def main(
                 save_path = save_dir.joinpath(f"{alignDat.ref}.p")
                 with open(save_path, "wb") as f:
                     pickle.dump(alignDat, f)
+
+    # This is just so that the root waits until all the workers are done
+    done_workers = mp_con.comm.gather(mp_con.rank, root=0)
+
+    if mp_con.rank == 0 and done_workers is not None:
+        if len(done_workers) == mp_con.size:
+            tarpath = out_dir.parent.joinpath(f"{out_dir.name}.tar")
+            with tf.open(tarpath, "w") as picktar:
+                print(f"Archiving pickled data")
+                picktar.add(out_dir)
+
+            print(f"Removing directory")
+            rmtree(out_dir)
+
+        else:
+            print(f"Did all workers not finish?: {done_workers}")
+
+    raise SystemExit(0)

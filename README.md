@@ -8,11 +8,11 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 ### RNA-Seq data description
 
-**e_coli_sastry2019_acc.txt**: Run accession list for *E. coli* RNA-seq datasets from [Sastry 2019](https://www.nature.com/articles/s41467-019-13483-w). This list contains original runs from the paper (GSE122211, GSE122295, GSE122296, **but did not include GSE122320**) as well as datasets from [Guzman2018](https://www.biorxiv.org/content/10.1101/310946v2.full) (GSE114358) and [Anand2019](https://www.nature.com/articles/s41564-018-0340-2) (GSE122779).
+**e_coli_sastry2019_acc.txt**: Run accession list for *Escherichia coli* RNA-seq datasets from [Sastry 2019](https://www.nature.com/articles/s41467-019-13483-w). This list contains original runs from the paper (GSE122211, GSE122295, GSE122296, **but did not include GSE122320**) as well as datasets from [Guzman2018](https://www.biorxiv.org/content/10.1101/310946v2.full) (GSE114358) and [Anand2019](https://www.nature.com/articles/s41564-018-0340-2) (GSE122779).
 
-**b_sub_guo2023_acc.txt**: Run accession list for *B. subtilis* str. 168 from [Guo 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9879117/) ([GSE219221](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE219221)).
+**b_sub_guo2023_acc.txt**: Run accession list for *Bacillus subtilis* str. 168 from [Guo 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9879117/) ([GSE219221](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE219221)).
 
-**b_sub_tilburg2022_acc.txt**: Run accession list for *B. subtilis* str. 168 from [Tilburg 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9049611/) ([GSE169409](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE169409)). *These reads may not be paired since the fasterq-dump did not produce paired files*.
+**b_sub_tilburg2022_acc.txt**: Run accession list for *Bacillus subtilis* str. 168 from [Tilburg 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9049611/) ([GSE169409](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE169409)). *These reads may not be paired since the fasterq-dump did not produce paired files*.
 
 ---
 *<u>Turns out HISAT-2 could not process these because they seem to be single-end reads packed as paired-end. Need to be thrown out</u>*
@@ -24,7 +24,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 ---
 **m_tuber_H37Rv_martini2023_acc.txt**: Run accession list for *M. tuberculosis* str H37Rv from [Martini 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10178195/) ([GSE218354](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE218354)).
 
-**s_elon_lu2023_acc.txt**: Run accession list for *S. elongatus* from [Lu 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10365998/) ([GSE227397](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227397)).
+**s_elon_lu2023_acc.txt**: Run accession list for *Synechococcus elongatus* from [Lu 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10365998/) ([GSE227397](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE227397)).
 
 **c_vibrioides_mclaughlin2023_acc**: Run accession list for *Caulobacter vibrioides* from [McLaughlin 2023](https://pubmed.ncbi.nlm.nih.gov/37645952/) ([GSE241057](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE241057)).
 
@@ -69,6 +69,20 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 **s_enter_typh_kant2022_acc**: Run accession list for *Salmonella enterica* subsp. enterica serovar Typhimurium from [GSE203342](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE203342) 13.9GB.
 
 **a_baum_pokhrel2023_acc**: Run accession list for *Acinetobacter baumannii* from [GSE183334](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE183334) 3.8GB.
+
+**c_basil_kugler2023_acc**: Run accession list for *Cupriavidus basilensis* from [GSE216827](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE216827). List without pgypsum and apatite condition 26.4GB.
+
+**m_smeg_grigorov2023_acc**: Run accession list for *Mycolicibacterium smegmatis* MC2 155 from [Grigorov 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10454040/) ([GSE232901](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE232901)). List captures only total RNA fraction 7.3GB.
+
+**s_meli_fagorzi2021_acc**: Run accession list for *Sinorhizobium meliloti* from [Fagorzi 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7901481/) ([GSE151705](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE151705)). List captures only the 11 no treatment conditions from the total 58 runs 9.7GB.
+
+**d_vulg_gao2016_acc**: Run accession list for *Desulfovibrio vulgaris* str. Hildenborough from [Gao 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007762/) ([GSE78834](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE78834)) 2.8GB.
+
+**d_vulg_guo2019_acc**: Run accession list for *Desulfovibrio vulgaris* str. Hildenborough from [GSE101911](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101911) 7.9GB.
+
+**b_frag_fiebig2023_acc**: Run accession list for *Bacteroides fragilis* from [Fiebig 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10197588/) ([GSE220692](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE220692)) 3.1GB.
+
+**e_fae_avican2021_acc**: Run accession list for *Enterococcus faecalis* from [Avican 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8172932/) ([GSE152295](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152295)). List captures 2/3 replicates for each of the non-untreated conditions and all of the untreated conditions 15.9GB    Treponema pallidum.
 
 ## Miscellaneous
 

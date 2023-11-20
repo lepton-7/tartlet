@@ -26,6 +26,12 @@ validation/rna_seq/x_albi/*
 validation/rna_seq/s_sanguinis/*
 validation/rna_seq/s_enter_typh/*
 validation/rna_seq/a_baum/*
+validation/rna_seq/b_frag/*
+validation/rna_seq/c_basil/*
+validation/rna_seq/d_vulg/*
+validation/rna_seq/e_fae/*
+validation/rna_seq/m_smeg/*
+validation/rna_seq/s_meli/*
 
 validation/alignment/outputs/**/switch_seqs_delta*
 

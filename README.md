@@ -104,7 +104,7 @@ DSETS=(
 )
 
 for DSET in ${DSETS[@]}; do
-    mkdir -p "$DSET"
-    mv *.$DSET.* ./$DSET
+    mkdir -p "./jobs/$DSET"
+    mv ./jobs/*.$DSET.* ./jobs/$DSET
 done
 ```

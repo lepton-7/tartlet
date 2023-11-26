@@ -91,3 +91,20 @@ Start an interactive shell on pitzer:
 ```bash
 srun -n 1 --cpus-per-task=48 --account=PDS0325 --time=1:00:00 --pty /bin/bash
 ```
+
+Move job files to their own directories:
+
+```bash
+DSETS=(
+    "m_smeg"
+    "s_meli"
+    "d_vulg"
+    "b_frag"
+    "e_fae"
+)
+
+for DSET in ${DSETS[@]}; do
+    mkdir -p "$DSET"
+    mv *.$DSET.* ./$DSET
+done
+```

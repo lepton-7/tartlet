@@ -58,7 +58,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **b_anth_corsi2020_acc**: Run accession list for *Bacillus anthracis* from [Corsi 2020](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7843513/) ([GSE152356](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152356)). List captures 6 runs from the "Parent" genotype and 3/6 for each of the others 12.7GB.
 
-~~**n_gonorr_zachary2021_acc**: Run accession list for *Neisseria gonorrhoeae* from [Zachary 2021](https://pubmed.ncbi.nlm.nih.gov/34515630/) ([GSE177032](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE177032) 5GB).~~ *Theses were single ended.*
+~~**n_gonorr_zachary2021_acc**: Run accession list for *Neisseria gonorrhoeae* from [Zachary 2021](https://pubmed.ncbi.nlm.nih.gov/34515630/) ([GSE177032](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE177032) 5GB).~~ *These were single ended.*
 
 **n_gonorr_cris2022_acc**: Run accession list for *Neisseria gonorrhoeae* from [GSE191020](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE191020). List captures 12 of the 18 runs, 2 from each condition 15.4GB.
 
@@ -70,7 +70,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **a_baum_pokhrel2023_acc**: Run accession list for *Acinetobacter baumannii* from [GSE183334](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE183334) 3.8GB.
 
-**c_basil_kugler2023_acc**: Run accession list for *Cupriavidus basilensis* from [GSE216827](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE216827). List without pgypsum and apatite condition 26.4GB.
+~~**c_basil_kugler2023_acc**: Run accession list for *Cupriavidus basilensis* from [GSE216827](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE216827). List without pgypsum and apatite condition 26.4GB.~~ *These were single ended.*
 
 **m_smeg_grigorov2023_acc**: Run accession list for *Mycolicibacterium smegmatis* MC2 155 from [Grigorov 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10454040/) ([GSE232901](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE232901)). List captures only total RNA fraction 7.3GB.
 
@@ -82,7 +82,19 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **b_frag_fiebig2023_acc**: Run accession list for *Bacteroides fragilis* from [Fiebig 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10197588/) ([GSE220692](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE220692)) 3.1GB.
 
-**e_fae_avican2021_acc**: Run accession list for *Enterococcus faecalis* from [Avican 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8172932/) ([GSE152295](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152295)). List captures 2/3 replicates for each of the non-untreated conditions and all of the untreated conditions 15.9GB    Treponema pallidum.
+**e_fae_avican2021_acc**: Run accession list for *Enterococcus faecalis* from [Avican 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8172932/) ([GSE152295](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152295)). List captures 2/3 replicates for each of the non-untreated conditions and all of the untreated conditions 15.9GB.
+
+**b_xyla_despres2016_acc**: Run accession list for *Bacteroides xylanisolvens* from [Despres 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4769552/) ([GSE74379](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE74379)) 23.9Gb.
+
+**x_ory_park2022_acc**: Run accession list for *Xanthomonas oryzae* pv. oryzae KACC 10331 from [Park 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9709210/) ([GSE89651](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE89651)) 11.4GB.
+
+**s_epi_avican2021_acc**: Run accession list for *Staphylococcus epidermidis* from [Avican 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8172932/) ([GSE152295](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152295)) 23.5GB.
+
+**b_pseudo_avican2021_acc**: Run accession list for *Burkholderia pseudomallei* from [Avican 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8172932/) ([GSE152295](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152295)) 23.5GB.
+
+**c_diff_weiss2021_acc**: Run accession list for *Clostridioides difficile* from [Weiss 2021](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8767335/) ([GSE173804](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE173804)). List only captures the 6 runs of strain CD630 19.8GB.
+
+**e_limo_jeong2020_acc**: Run accession list for *Eubacterium limosum* from [GSE149269](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE149269) 6.2GB.
 
 ## Miscellaneous
 

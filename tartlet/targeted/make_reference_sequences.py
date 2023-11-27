@@ -35,7 +35,7 @@ from tart.utils.mpi_context import BasicMPIContext
     "--dset",
     default=None,
     show_default=True,
-    help="Select specific rows in the ledger according to the Dataset column. Handy if there are multiple genomes in --genome-dir and only a subset need to have reference sequences generated in a group.",
+    help="Select specific rows in the ledger according to the dataset column. Handy if there are multiple genomes in --genome-dir and only a subset need to have reference sequences generated in a group.",
 )
 @click.option(
     "--pre-del",
@@ -64,12 +64,12 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
             "seq_to",
             "strand",
             "trunc",
-            "MAG_accession",
-            "Dataset",
+            "genome_accession",
+            "dataset",
         ]
     ]
     if dset is not None:
-        table = table[table["Dataset"] == dset]
+        table = table[table["dataset"] == dset]
 
     if not Path(genome_dir).exists():
         raise ValueError(f" File/directory {genome_dir} does not exist")

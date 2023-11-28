@@ -1,8 +1,8 @@
-from typing import Optional
 import click
 import requests
 
 from pathlib import Path
+from typing import Optional
 from subprocess import run, PIPE
 from tart.utils.mpi_context import BasicMPIContext
 from tart.utils.utils import print, get_datapath_obj
@@ -91,7 +91,7 @@ def cmscan(
     out_dir: Path,
     cm_path: Path,
     options: tuple | list,
-    out_file: Optional[Path] = None,
+    out_file: Optional[Path],
     rank: int = 0,
     no_stats: bool = False,
 ):

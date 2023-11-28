@@ -33,4 +33,4 @@ targeted.add_command(make_reference_sequences.main, name="reference-gen")
 targeted.add_command(parse_BAMs.main, name="parse-bam")
 targeted.add_command(switch_loc_in_ref.main, name="bounds")
 
-utils.add_command(infernal.dafault_scan_for_riboswitches, name="find-riboswitches")
+utils.add_command(infernal.default_scan_for_riboswitches, name="find-riboswitches")

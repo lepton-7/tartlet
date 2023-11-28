@@ -185,7 +185,7 @@ def riboswitch_cmscan(
 )
 @click.option("--no-stats", is_flag=True, help="Supresses cmscan output to the console")
 @click.argument("total_files", nargs=-1)
-def dafault_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats: bool):
+def default_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats: bool):
     """Runs input files against the latest (14.9) rfam riboswitch covariance models.
 
     Supports MPI acceleration.

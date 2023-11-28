@@ -200,7 +200,7 @@ def default_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats:
     worker_list = mp_con.generate_worker_list()
 
     if mp_con.rank == 0:
-        print(f"Started {mp_con.size} workers")
+        print(f"Started {mp_con.size} workers.")
 
     for fasta_path in worker_list:
         riboswitch_cmscan(

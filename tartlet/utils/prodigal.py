@@ -58,7 +58,7 @@ def prodigal(
 
     else:
         print(
-            f"Successfully completed prodigal for {input_file_name} on worker {rank}."
+            f"Successfully completed prodigal for {input_file.name} on worker {rank}."
         )
 
 
@@ -81,7 +81,7 @@ def default_prodigal(out_dir, total_files: tuple or list):
     worker_list = mp_con.generate_worker_list()
 
     if mp_con.rank == 0:
-        print(f"Started {mp_con.size} workers")
+        print(f"Started {mp_con.size} workers.")
 
     options = ["-q"]
 

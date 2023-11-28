@@ -191,7 +191,7 @@ def default_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats:
     Supports MPI acceleration.
 
     Args:\n
-        out_dir (str): Output directory for cmscan output files.
+        out_dir (str): Output directory for cmscan output files. Made if does not exist.
         total_files (tupleorlist): List or tuple of file paths to pass as cmscan inputs.
         no_stats (bool): Suppresses cmscan output.
     """
@@ -199,7 +199,8 @@ def default_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats:
     mp_con = BasicMPIContext([*total_files])
     worker_list = mp_con.generate_worker_list()
 
-    print(f"Started {mp_con.size} workers")
+    if mp_con.rank == 0:
+        print(f"Started {mp_con.size} workers")
 
     for fasta_path in worker_list:
         riboswitch_cmscan(

@@ -1,10 +1,82 @@
 import click
+import pandas as pd
 
 from pathlib import Path
-from typing import Optional
+from Bio import SeqIO, SeqRecord
 from subprocess import run, PIPE
 from tart.utils.utils import print
+from typing import Any, Generator, Literal, Optional
 from tart.utils.mpi_context import BasicMPIContext
+
+
+class ORF:
+    def __init__(self, record: SeqRecord.SeqRecord) -> None:
+        """A prodigal ORF record from the translation output file (.faa)
+
+        Args:
+            record (SeqRecord.SeqRecord): _description_
+        """
+        self.strand: int = int(record.description.split(" # ")[3])
+        self.start: int = int(record.description.split(" # ")[1])
+        self.stop: int = int(record.description.split(" # ")[2])
+
+        self.orf_from = self.stop if self.strand < 0 else self.start
+        self.orf_to = self.start if self.strand < 0 else self.stop
+
+        self.contig = "_".join(record.id.split("_")[:-1])
+        # self.seq = record.seq
+
+
+class ProdigalOutput:
+    def __init__(self, filepath: str | Path) -> None:
+        """Parser class to ingest prodigal translation output files (.faa)
+
+        Args:
+            filepath (str | Path): Prodigal .faa output filepath.
+        """
+        self.path = Path(filepath)
+
+        self._orfs: list[ORF] = []
+        for record in SeqIO.parse(self.path, "fasta"):
+            self._orfs.append(ORF(record))
+
+    def __iter__(self) -> Generator[ORF, Any, Any]:
+        for orf in self._orfs:
+            yield orf
+
+    def find_downstream_orf(
+        self, position: int, strand: Literal[-1, 1], contig: str
+    ) -> ORF:
+        """Find and return the first downstream ORF for given coordinates.
+
+        Args:
+            position (int): Find ORF beyond this point.
+            strand (int): Search strand (1 or -1).
+            contig (str): Search contig.
+
+        Returns:
+            ORF: First downstream ORF.
+        """
+        if strand > 0:
+            for orf in self._orfs:
+                if (
+                    orf.contig == contig
+                    and orf.strand == strand
+                    and orf.orf_from > position
+                ):
+                    return orf
+
+        else:
+            for orf in reversed(self._orfs):
+                if (
+                    orf.contig == contig
+                    and orf.strand == strand
+                    and orf.orf_from < position
+                ):
+                    return orf
+
+        # No downstream ORF for given position
+        return None
 
 
 def prodigal(
@@ -76,6 +148,7 @@ def default_prodigal(out_dir, total_files: tuple or list):
         out_dir (str): Directory for prodigal output files. Made if does not exist.
         total_files (tupleorlist): List or tuple of file paths to pass as prodigal inputs.
     """
+
     # MPI setup
     mp_con = BasicMPIContext([*total_files])
     worker_list = mp_con.generate_worker_list()
@@ -94,3 +167,49 @@ def default_prodigal(out_dir, total_files: tuple or list):
             trans_file=None,
             output_file=None,
         )
+
+
+@click.command()
+def record_orf_locations(ledger, prodigal_dir):
+    ledger_path = Path(ledger)
+    prodigal_dir = Path(prodigal_dir)
+
+    df = pd.read_csv(ledger_path)
+
+    # Check if ORF locations are already recorded and handle accordingly
+    if "orf_from" in df.columns and "orf_to" in df.columns:
+        from_list: list[str] = list(df["orf_from"])
+        to_list: list[str] = list(df["orf_to"])
+
+    else:
+        from_list: list[str] = []
+        to_list: list[str] = []
+        for i in range(len(df)):
+            from_list.append("")
+            to_list.append("")
+
+    # MPI setup for unique genomes
+    mp_con = BasicMPIContext(list(pd.unique(df["genome_accession"])))
+    worker_list = mp_con.generate_worker_list()
+
+    for genome_name in worker_list:
+        genome_path = prodigal_dir.joinpath(f"genome_name.faa")
+
+        if not genome_path.is_file:
+            print(
+                f"Prodigal output {genome_path} does not exist.\nSkipping for {genome_name}."
+            )
+            continue
+
+        orfs = ProdigalOutput(genome_path)
+
+        for i, row in df.iterrows():
+            if row["genome_accession"] != genome_name:
+                continue
+
+            strand = -1 if row["strand"] == "-" else 1
+            downstream = orfs.find_downstream_orf(
+                row["seq_from"], strand, row["query_name"]
+            )
+
+            # if downstream is not None:

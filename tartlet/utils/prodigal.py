@@ -4,7 +4,7 @@ import pandas as pd
 from pathlib import Path
 from Bio import SeqIO, SeqRecord
 from subprocess import run, PIPE
-from tart.utils.utils import print
+from tart.utils.utils import print, rowid
 from typing import Any, Generator, Literal, Optional
 from tart.utils.mpi_context import BasicMPIContext
 
@@ -46,7 +46,7 @@ class ProdigalOutput:
 
     def find_downstream_orf(
         self, position: int, strand: Literal[-1, 1], contig: str
-    ) -> ORF:
+    ) -> ORF | None:
         """Find and return the first downstream ORF for given coordinates.
 
         Args:
@@ -176,22 +176,11 @@ def record_orf_locations(ledger, prodigal_dir):
 
     df = pd.read_csv(ledger_path)
 
-    # Check if ORF locations are already recorded and handle accordingly
-    if "orf_from" in df.columns and "orf_to" in df.columns:
-        from_list: list[str] = list(df["orf_from"])
-        to_list: list[str] = list(df["orf_to"])
-
-    else:
-        from_list: list[str] = []
-        to_list: list[str] = []
-        for i in range(len(df)):
-            from_list.append("")
-            to_list.append("")
-
     # MPI setup for unique genomes
     mp_con = BasicMPIContext(list(pd.unique(df["genome_accession"])))
     worker_list = mp_con.generate_worker_list()
 
+    local_entries = {}
     for genome_name in worker_list:
         genome_path = prodigal_dir.joinpath(f"genome_name.faa")
 
@@ -212,4 +201,53 @@ def record_orf_locations(ledger, prodigal_dir):
                 row["seq_from"], strand, row["query_name"]
             )
 
-            # if downstream is not None:
+            if downstream is not None:
+                local_entries[rowid(row)] = [i, downstream.orf_from, downstream.orf_to]
+
+    print("Gathering entries...")
+    entries_arr = mp_con.comm.gather(local_entries, root=0)
+    print("Completed gather.")
+
+    if mp_con.rank == 0 and entries_arr is not None:
+        # Check if ORF locations are already recorded and handle accordingly
+        if "orf_from" in df.columns and "orf_to" in df.columns:
+            print("ORF location columns already exist, overwriting empty entries.")
+            from_list: list[str] = list(df["orf_from"])
+            to_list: list[str] = list(df["orf_to"])
+
+        else:
+            from_list: list[str] = []
+            to_list: list[str] = []
+            for i in range(len(df)):
+                from_list.append("")
+                to_list.append("")
+
+        # Consolidate
+        entries = {}
+        for inst_dict in entries_arr:
+            entries.update(inst_dict)
+
+        # Add entries to the ledger
+        written = 0
+        for k, v in entries.items():
+            idx = v[0]
+            f = v[1]
+            t = v[2]
+
+            if k != rowid(df.iloc[idx]):
+                raise ValueError(
+                    f"Row IDs did not match: {k} =/= {rowid(df.iloc[idx])}"
+                )
+
+            if not len(from_list[idx]) and not len(to_list[idx]):
+                from_list[idx] = f
+                to_list[idx] = t
+                written += 1
+
+        print(f"Recorded {written} downstream ORF locations.")
+        df["orf_from"] = from_list
+        df["orf_to"] = to_list
+
+        df.to_csv(ledger_path)
+
+    raise SystemExit(0)

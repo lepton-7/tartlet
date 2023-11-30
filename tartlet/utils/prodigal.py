@@ -179,6 +179,16 @@ def default_prodigal(out_dir, total_files: tuple or list):
     "-i", "--prodigal-dir", required=True, help="Directory with prodigal outputs."
 )
 def record_orf_locations(ledger, prodigal_dir):
+    """Record riboswitch downstream ORF locations in the ledger.
+
+    Args:
+        ledger (str): Path to the riboswitch ledger.
+        prodigal_dir (str): Path to the prodigal outputs directory.
+
+    Raises:
+        ValueError: _description_
+        SystemExit: _description_
+    """
     ledger_path = Path(ledger)
     prodigal_dir = Path(prodigal_dir)
 

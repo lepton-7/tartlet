@@ -190,7 +190,7 @@ def record_orf_locations(ledger, prodigal_dir):
 
     local_entries = {}
     for genome_name in worker_list:
-        genome_path = prodigal_dir.joinpath(f"genome_name.faa")
+        genome_path = prodigal_dir.joinpath(f"{genome_name}.faa")
 
         if not genome_path.is_file:
             print(
@@ -212,11 +212,12 @@ def record_orf_locations(ledger, prodigal_dir):
             if downstream is not None:
                 local_entries[rowid(row)] = [i, downstream.orf_from, downstream.orf_to]
 
-    print("Gathering entries...")
+    if mp_con.rank == 0:
+        print("Gathering entries...")
     entries_arr = mp_con.comm.gather(local_entries, root=0)
-    print("Completed gather.")
 
     if mp_con.rank == 0 and entries_arr is not None:
+        print("Completed gather.")
         # Check if ORF locations are already recorded and handle accordingly
         if "orf_from" in df.columns and "orf_to" in df.columns:
             print("ORF location columns already exist, overwriting empty entries.")

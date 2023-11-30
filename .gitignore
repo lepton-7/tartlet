@@ -32,6 +32,10 @@ validation/rna_seq/d_vulg/*
 validation/rna_seq/e_fae/*
 validation/rna_seq/m_smeg/*
 validation/rna_seq/s_meli/*
+validation/rna_seq/c_diff/*
+validation/rna_seq/b_xyla/*
+validation/rna_seq/x_ory/*
+validation/rna_seq/e_limo/*
 
 validation/alignment/outputs/**/switch_seqs_delta*
 

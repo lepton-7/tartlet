@@ -248,7 +248,7 @@ def record_orf_locations(ledger, prodigal_dir):
                     f"Row IDs did not match: {k} =/= {rowid(df.iloc[idx])}"
                 )
 
-            if not len(from_list[idx]) and not len(to_list[idx]):
+            if not len(str(from_list[idx])) and not len(str(to_list[idx])):
                 from_list[idx] = f
                 to_list[idx] = t
                 written += 1

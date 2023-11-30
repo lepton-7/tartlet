@@ -36,3 +36,4 @@ targeted.add_command(switch_loc_in_ref.main, name="bounds")
 
 utils.add_command(infernal.default_scan_for_riboswitches, name="find-riboswitches")
 utils.add_command(prodigal.default_prodigal, name="find-orfs")
+utils.add_command(prodigal.record_orf_locations, name="record-downstream")

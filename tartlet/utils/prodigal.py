@@ -170,6 +170,14 @@ def default_prodigal(out_dir, total_files: tuple or list):
 
 
 @click.command()
+@click.option(
+    "--ledger",
+    required=True,
+    help="Path to the ledger containing riboswitch information.",
+)
+@click.option(
+    "-i", "--prodigal-dir", required=True, help="Directory with prodigal outputs."
+)
 def record_orf_locations(ledger, prodigal_dir):
     ledger_path = Path(ledger)
     prodigal_dir = Path(prodigal_dir)

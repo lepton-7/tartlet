@@ -257,6 +257,6 @@ def record_orf_locations(ledger, prodigal_dir):
         df["orf_from"] = from_list
         df["orf_to"] = to_list
 
-        df.to_csv(ledger_path)
+        df.to_csv(ledger_path, index=False)
 
     raise SystemExit(0)

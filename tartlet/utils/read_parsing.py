@@ -264,7 +264,7 @@ class AlignDat:
     transcriptional activity for one reference from one sorted BAM.
     """
 
-    def __init__(self, ref: str, reflength: int, refbounds: list) -> None:
+    def __init__(self, ref: str, reflength: int, boundsDict: dict[str, list]) -> None:
         self.ref = ref
         self.ref_length = reflength
 
@@ -296,28 +296,32 @@ class AlignDat:
 
         self.rawends = np.zeros(reflength)
 
-        self.refbounds = refbounds
-        self._set_refrelative_switch_bounds(refbounds)
+        self.ref_bounds = boundsDict["ref"]
+        self.orf_bounds = boundsDict["orf"]
 
-    def _set_refrelative_switch_bounds(self, refbounds: list) -> None:
+        self._set_refrelative_switch_bounds()
+
+    def _set_refrelative_switch_bounds(self) -> None:
         """Starting from the riboswitch locus relative to source genome
         indexing encoded in the ref string, calculates the riboswitch
         locus indices relative to the start of the alignment reference.
-
-        Args:
-            refbounds (list): Locus of the alignment reference relative to source genome.
-            Has the form [start, end].
         """
         splits = self.ref.split("#")
 
         # Switch bounds are inclusive
         if splits[-1] == "+":
-            self.switch_start = int(splits[-3]) - refbounds[0]
-            self.switch_end = int(splits[-2]) - refbounds[0]
+            self.switch_start = int(splits[-3]) - self.ref_bounds[0]
+            self.switch_end = int(splits[-2]) - self.ref_bounds[0]
+
+            self.orf_start = int(self.orf_bounds[0] - self.ref_bounds[0])
+            self.orf_end = int(self.orf_bounds[1] - self.ref_bounds[0])
 
         else:
-            self.switch_start = int(splits[-2]) - refbounds[0]
-            self.switch_end = int(splits[-3]) - refbounds[0]
+            self.switch_start = int(splits[-2]) - self.ref_bounds[0]
+            self.switch_end = int(splits[-3]) - self.ref_bounds[0]
+
+            self.orf_start = int(self.orf_bounds[1] - self.ref_bounds[0])
+            self.orf_end = int(self.orf_bounds[0] - self.ref_bounds[0])
 
     def _coalesce_into_cov(self, pair: ReadPair, allowSoftClips):
         """Extracts fragment coverage information from a ReadPair object.
@@ -641,7 +645,7 @@ class SortedBAM:
         # in the genome/MAG it was sliced from. These bounds are used
         # to offset the reference start on position axes in plots down to 0.
         with open(ref_locus_dict_path, "r") as f:
-            self.ref_loc_dict: dict[str, list] = json.load(f)
+            self.ref_loc_dict: dict[str, dict[str, list]] = json.load(f)
 
         self._set_reference_list()
 
@@ -713,10 +717,10 @@ class SortedBAM:
             # The + 1 is to offset downstream plot x-axis to seem 1-indexed
             reflength = self.reference_length(ref) + 1
             readpairs = self.fetch_pairs(ref)
-            refbounds = self.ref_loc_dict[ref]
+            boundDict = self.ref_loc_dict[ref]
 
             data.append(
-                AlignDat(ref, reflength, refbounds).process_pairs(
+                AlignDat(ref, reflength, boundDict).process_pairs(
                     readpairs, allowSoftClips
                 )
             )

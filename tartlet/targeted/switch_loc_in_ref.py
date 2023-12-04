@@ -68,6 +68,8 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
             "trunc",
             "genome_accession",
             "dataset",
+            "orf_from",
+            "orf_to",
         ]
     ]
     if dset is not None:
@@ -150,10 +152,13 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
                 to = row["seq_to"]
                 strand = row["strand"]
 
+                o_from = row["orf_from"]
+                o_to = row["orf_to"]
+
                 # No spaces to ensure the entire string is recognised as the ID
                 rowid = f"{classname}#{qname}#{frm}#{to}#{strand}"
 
-                seqs_local.update({rowid: (start, end)})
+                seqs_local.update({rowid: {"ref": (start, end), "orf": (o_from, o_to)}})
 
     seqs_arr = comm.gather(seqs_local, root=0)
 

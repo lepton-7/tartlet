@@ -110,7 +110,7 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
     if mp_con.is_active:
         for MAG_path in local_path_list:  # iterate over derep95 MAGs
             MAGDict = {x.id: str(x.seq) for x in SeqIO.parse(MAG_path, "fasta")}
-            subset = table[table["MAG_accession"] == os.path.split(MAG_path)[-1][:-4]]
+            subset = table[table["genome_accession"] == os.path.split(MAG_path)[-1][:-4]]
 
             for _, row in subset.iterrows():  # iterate over MAG riboswitches
                 # Infernal start and stop entries are relative to canonical 5' -> 3';

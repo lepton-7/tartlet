@@ -296,6 +296,7 @@ class AlignDat:
 
         self.rawends = np.zeros(reflength)
 
+        self.refbounds = refbounds
         self._set_refrelative_switch_bounds(refbounds)
 
     def _set_refrelative_switch_bounds(self, refbounds: list) -> None:

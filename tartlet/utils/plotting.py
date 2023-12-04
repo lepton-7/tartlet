@@ -125,25 +125,9 @@ class CoveragePlot:
         ax.set_xticks(self.xticks)
         ax.set_xlabel("Nucleotide position (bp)")
 
-        bott, top = ax.get_ylim()
         ax.set_ylabel("Count")
 
-        a_height = (top - bott) * 0.05
-
-        ax.annotate(
-            "",
-            xy=(self._dat.switch_start, 0),
-            xytext=(self._dat.switch_start, a_height),
-            arrowprops=dict(facecolor="black"),
-            annotation_clip=False,
-        )
-        ax.annotate(
-            "",
-            xy=(self._dat.switch_end, 0),
-            xytext=(self._dat.switch_end, a_height),
-            arrowprops=dict(facecolor="black"),
-            annotation_clip=False,
-        )
+        self._add_switch_arrows(ax)
 
     def _conv_ends_panel(self, ax: Axes):
         """Add the raw end convolution panel to the figure.
@@ -165,13 +149,22 @@ class CoveragePlot:
             align="edge",
         )
         ax.set_facecolor(self.palette["axback"])
-        ax.set_title(f"Convolved inferred fragment ends ({self._dat.bin_size}nt bins)")
+        ax.set_title(f"Convolved inferred fragment ends)")
         ax.set_xticks(self.xticks)
         ax.set_xlabel("Nucleotide position (bp)")
 
-        bott, top = ax.get_ylim()
-        ax.set_ylabel("Count")
+        # The y axis doesn't really mean anything?
+        # ax.set_ylabel("Count")
 
+        self._add_switch_arrows(ax)
+
+    def _add_switch_arrows(self, ax: Axes):
+        """Add little arrows to mark the bounds of the riboswitch.
+
+        Args:
+            ax (Axes): Panel Axes.
+        """
+        bott, top = ax.get_ylim()
         a_height = (top - bott) * 0.05
 
         ax.annotate(

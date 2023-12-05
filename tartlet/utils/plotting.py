@@ -192,15 +192,29 @@ class CoveragePlot:
             ax (Axes): Panel Axes.
         """
         bott, top = ax.get_ylim()
-        y_loc = top * 0.7
+        switch_y = top * 0.8
+        orf_y = top * 0.65
         box_height = top * 0.1
 
+        # Riboswitch box
         ax.add_patch(
             Rectangle(
-                xy=(self._dat.switch_start, y_loc),
+                xy=(self._dat.switch_start, switch_y),
                 width=self._dat.switch_end - self._dat.switch_start,
                 height=box_height,
                 facecolor="xkcd:crimson",
+                alpha=0.8,
+                zorder=0.0,
+            )
+        )
+
+        # ORF box
+        ax.add_patch(
+            Rectangle(
+                xy=(self._dat.orf_start, orf_y),
+                width=self._dat.orf_end - self._dat.orf_start,
+                height=box_height,
+                facecolor="green",
                 alpha=0.8,
                 zorder=0.0,
             )

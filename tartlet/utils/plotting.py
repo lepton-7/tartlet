@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 from math import ceil
 from matplotlib.axes import Axes
+from matplotlib.patches import Rectangle
 from tart.utils.read_parsing import AlignDat
 from tart.utils.activity_inference import _gen_kernel
 
@@ -128,6 +129,7 @@ class CoveragePlot:
         ax.set_ylabel("Count")
 
         self._add_switch_arrows(ax)
+        self._add_boxes(ax)
 
     def _conv_ends_panel(self, ax: Axes):
         """Add the raw end convolution panel to the figure.
@@ -148,7 +150,7 @@ class CoveragePlot:
             width=1,
             align="edge",
         )
-        ax.set_facecolor(self.palette["axback"])
+        # ax.set_facecolor(self.palette["axback"])
         ax.set_title(f"Convolved inferred fragment ends)")
         ax.set_xticks(self.xticks)
         ax.set_xlabel("Nucleotide position (bp)")
@@ -157,6 +159,7 @@ class CoveragePlot:
         # ax.set_ylabel("Count")
 
         self._add_switch_arrows(ax)
+        self._add_boxes(ax)
 
     def _add_switch_arrows(self, ax: Axes):
         """Add little arrows to mark the bounds of the riboswitch.
@@ -180,6 +183,27 @@ class CoveragePlot:
             xytext=(self._dat.switch_end, a_height),
             arrowprops=dict(facecolor="black"),
             annotation_clip=False,
+        )
+
+    def _add_boxes(self, ax: Axes):
+        """Add boxes to indicate functional unit bounds.
+
+        Args:
+            ax (Axes): Panel Axes.
+        """
+        bott, top = ax.get_ylim()
+        y_loc = top * 0.7
+        box_height = top * 0.1
+
+        ax.add_patch(
+            Rectangle(
+                xy=(self._dat.switch_start, y_loc),
+                width=self._dat.switch_end - self._dat.switch_start,
+                height=box_height,
+                facecolor="xkcd:crimson",
+                alpha=0.8,
+                zorder=0.0,
+            )
         )
 
     def _coverage_panel(self, ax: Axes):

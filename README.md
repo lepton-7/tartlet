@@ -56,7 +56,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **p_cholor_aureo3084_wang2016_acc**: Run accession list for *Pseudomonas chlororaphis* subsp. *aureofaciens* 30-84 from [Wang 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4727817/) ([GSE61200](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE61200) 8.6GB).
 
-**b_anth_corsi2020_acc**: Run accession list for *Bacillus anthracis* from [Corsi 2020](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7843513/) ([GSE152356](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152356)). List captures 6 runs from the "Parent" genotype and 3/6 for each of the others 12.7GB.
+**b_anth_corsi2020_acc**: Run accession list for *Bacillus anthracis* from [Corsi 2020](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7843513/) ([GSE152356](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE152356)) 21.4GB.
 
 ~~**n_gonorr_zachary2021_acc**: Run accession list for *Neisseria gonorrhoeae* from [Zachary 2021](https://pubmed.ncbi.nlm.nih.gov/34515630/) ([GSE177032](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE177032) 5GB).~~ *These were single ended.*
 

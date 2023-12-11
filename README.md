@@ -103,7 +103,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 Indexes were generated via:
 
 ```bash
-
+hisat2-build -p 48 validation/genomes/Bsubtilis168.GCF_000009045.1.fna validation/survey/b_sub_168_index/b_sub_168_index
 ```
 
 ## Miscellaneous

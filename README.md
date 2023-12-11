@@ -96,6 +96,16 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **e_limo_jeong2020_acc**: Run accession list for *Eubacterium limosum* from [GSE149269](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE149269) 6.2GB.
 
+## Validation Survey of *B. subtilis* and *E. coli*
+
+### Alignment
+
+Indexes were generated via:
+
+```bash
+
+```
+
 ## Miscellaneous
 
 Start an interactive shell on pitzer:

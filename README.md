@@ -60,7 +60,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 ~~**n_gonorr_zachary2021_acc**: Run accession list for *Neisseria gonorrhoeae* from [Zachary 2021](https://pubmed.ncbi.nlm.nih.gov/34515630/) ([GSE177032](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE177032) 5GB).~~ *These were single ended.*
 
-**n_gonorr_cris2022_acc**: Run accession list for *Neisseria gonorrhoeae* from [GSE191020](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE191020). List captures 12 of the 18 runs, 2 from each condition 15.4GB.
+**n_gonorr_cris2022_acc**: Run accession list for *Neisseria gonorrhoeae* from [GSE191020](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE191020) 23.9GB.
 
 **a_kunk_seeger2023_acc**: Run accession list for *Apilactobacillus kunkeei* from [Seeger 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10496945/) ([GSE205998](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205998) 500MB).
 

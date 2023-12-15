@@ -39,5 +39,7 @@ validation/rna_seq/e_limo/*
 
 validation/alignment/outputs/**/switch_seqs_delta*
 
+validation/survey/alignment/b_sub_168_alignment_20231113
+
 **/.vscode
 *__ex__.*

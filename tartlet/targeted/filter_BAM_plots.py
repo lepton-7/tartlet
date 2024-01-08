@@ -180,11 +180,11 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv):
         # Check whether there are enough reads to proceed.
         # This needs to be done to avoid clutter in the results
         # that failed the filter
-        if (
-            max(alignDat.readcov[alignDat.switch_start : alignDat.switch_end])
-            < min_cov_depth
-        ):
-            align_charac["decision_note"] = "Minimum coverage not reached"
+        max_cov = max(alignDat.readcov[alignDat.switch_start : alignDat.switch_end])
+        if max_cov < min_cov_depth:
+            align_charac[
+                "decision_note"
+            ] = f"Minimum coverage not reached ({max_cov}<{min_cov_depth})"
             charac_local.append(align_charac)
             continue
 

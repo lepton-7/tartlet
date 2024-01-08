@@ -388,6 +388,7 @@ def peak_significance(sorteddelta: list[list[int]], i: int) -> tuple[float, list
         # some weird scipy error that occasionaly happens
         # check 7.all.filter_BAM_plots.out.2024-01-08_00-17-30.25487369 for details
         pval = 1.0
+
     return (
         pval,
         cov_nocand,

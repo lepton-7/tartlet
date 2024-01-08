@@ -129,7 +129,7 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv):
         try:
             with tarfile.open(pick_root, "r:gz") as picktar:
                 total_files = [x.name for x in picktar.getmembers() if x.isfile()]
-        except KeyError:
+        except FileNotFoundError:
             print(f"Pickled data root {pick_root} not found.")
             total_files = None
 

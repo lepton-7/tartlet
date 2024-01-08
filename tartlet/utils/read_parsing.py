@@ -317,11 +317,13 @@ class AlignDat:
             self.orf_end = int(self.orf_bounds[1] - self.ref_bounds[0])
 
         else:
-            self.switch_start = int(splits[-2]) - self.ref_bounds[0]
-            self.switch_end = int(splits[-3]) - self.ref_bounds[0]
+            # - strands need to be processed separately because the seq
+            # is revcomp'd during ref generation itself
+            self.switch_start = self.ref_bounds[1] - int(splits[-3])
+            self.switch_end = self.ref_bounds[1] - int(splits[-2])
 
-            self.orf_start = int(self.orf_bounds[1] - self.ref_bounds[0])
-            self.orf_end = int(self.orf_bounds[0] - self.ref_bounds[0])
+            self.orf_start = int(self.ref_bounds[1] - self.orf_bounds[0])
+            self.orf_end = int(self.ref_bounds[1] - self.orf_bounds[1])
 
     def _coalesce_into_cov(self, pair: ReadPair, allowSoftClips):
         """Extracts fragment coverage information from a ReadPair object.

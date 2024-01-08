@@ -380,8 +380,16 @@ def peak_significance(sorteddelta: list[list[int]], i: int) -> tuple[float, list
     m = np.mean(cov_nocand, axis=0)
     sd = np.cov(cov_nocand, rowvar=0)  # type: ignore
 
+    try:
+        pval = multivariate_normal(mean=m, cov=sd, allow_singular=True).cdf(
+            sorteddelta[i]
+        )
+    except ValueError:
+        # some weird scipy error that occasionaly happens
+        # check 7.all.filter_BAM_plots.out.2024-01-08_00-17-30.25487369 for details
+        pval = 1.0
     return (
-        multivariate_normal(mean=m, cov=sd, allow_singular=True).cdf(sorteddelta[i]),
+        pval,
         cov_nocand,
     )
 
@@ -416,7 +424,11 @@ def has_candidate_peak(
 
     toRet: list[Candidate] = []
     for i, cand in enumerate(close_peaks):
-        pval, nocand_cov_delta = peak_significance(cov_delta, i)
+        try:
+            pval, nocand_cov_delta = peak_significance(cov_delta, i)
+        except ValueError:  # Haven't yet figured out why multivariate fails
+            pval, nocand_cov_delta = 1, [None]
+            print()
         if pval <= 0.05:
             cand_obj = Candidate(cand, switch_size, nocand_cov_delta, pval, alignDat)
             toRet.append(cand_obj)

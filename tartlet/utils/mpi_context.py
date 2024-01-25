@@ -2,7 +2,7 @@ import click
 from typing import Any, Optional
 
 try:
-    from mpi4py import MPI
+    import mpi4py
 
     no_mpi4py = False
 
@@ -39,7 +39,7 @@ class BasicMPIContext:
             self.rank = 0
 
         else:
-            self.comm = MPI.COMM_WORLD
+            self.comm = mpi4py.MPI.COMM_WORLD
             self.size = self.comm.Get_size()
             self.rank = self.comm.Get_rank()
 

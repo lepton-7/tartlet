@@ -7,6 +7,9 @@ __pycache__
 
 start_env.sh
 
+manuscript/*.bbl
+manuscript/*.synctex.gz
+
 validation/rna_seq/SRAs/*
 validation/rna_seq/e_coli/*
 validation/rna_seq/b_sub_168/*

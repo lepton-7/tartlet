@@ -18,6 +18,10 @@ class Read:
         # Not sure if this is specific to HISAT
         self.name = read.query_name
 
+        # Template length of the aligned read pair from the BAM
+        # This can be positive or negative
+        self.template_length = read.template_length
+
         self.cigarstring = read.cigarstring
         self.cigarlist = self._split_cigar()
         self.cigartally = self._tally_cigar()
@@ -138,6 +142,9 @@ class ReadPair:
         # Make sure reads have the same name
         self._check_read_names(reads)
         self.name = reads[0].name
+
+        # Absolute value for template length
+        self.template_length = abs(reads[0].template_length)
 
         self._compute_pair_orientation()
         self._assign_frag_termini()

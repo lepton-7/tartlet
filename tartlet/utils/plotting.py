@@ -278,6 +278,41 @@ class CoveragePlot:
 
         plt.close()
 
+    def distribution_plots(self, save_path: str | Path):
+        """Statistic plot for a riboswitch alignment data object.
+
+        Args:
+            save_path (str | Path): Save path. Parent directories must exist..
+        """
+        fig, ax = plt.subplots(figsize=(20, 10), dpi=100)
+
+        fig.suptitle(f"{self._dat.ref} fragments in switch")
+
+        self._frags_in_switch_hist(ax, 20)
+
+        # fig.savefig(f"{save_path}")
+
+        # plt.close()
+
+    def _frags_in_switch_hist(self, ax: Axes, bw: int):
+        """Generate the binned distribution of fragments aligning to the riboswitch sequence.
+
+        Args:
+            ax (Axes): Panel Axes.
+            bw (int): bin width.
+        """
+        ax.hist(
+            self._dat.tlen_in_switch,
+            bins=list(
+                np.arange(
+                    min(self._dat.tlen_in_switch),
+                    max(self._dat.tlen_in_switch) + bw,
+                    bw,
+                )
+            ),
+            density=True,
+        )
+
     def _with_conv(self, save_path: str | Path):
         """Generate the reference alignment plot with the fragment end
         convolution panel and save to file.

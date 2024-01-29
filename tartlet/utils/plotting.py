@@ -290,9 +290,9 @@ class CoveragePlot:
 
         self._frags_in_switch_hist(ax, 20)
 
-        # fig.savefig(f"{save_path}")
+        fig.savefig(f"{save_path}")
 
-        # plt.close()
+        plt.close()
 
     def _frags_in_switch_hist(self, ax: Axes, bw: int):
         """Generate the binned distribution of fragments aligning to the riboswitch sequence.
@@ -312,6 +312,8 @@ class CoveragePlot:
             ),
             density=True,
         )
+
+        ax.set_xlim((0, 1000))
 
     def _with_conv(self, save_path: str | Path):
         """Generate the reference alignment plot with the fragment end

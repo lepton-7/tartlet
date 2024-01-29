@@ -561,6 +561,9 @@ class AlignDat:
         """
         self.allowSoftClips = allowSoftClips
 
+        # Filtered read pairs that span across any section of the riboswitch sequence
+        self.tlen_in_switch: list[int] = []
+
         for pair in pairs:
             readIsProcessed = False
 
@@ -581,6 +584,14 @@ class AlignDat:
 
                 if not fProcessed or not rProcessed:
                     continue
+
+            # Check if fragment intersects with the riboswitch
+            if (
+                self.switch_start in range(*pair.fragment_termini)
+                or self.switch_end in range(*pair.fragment_termini)
+                or pair.fragment_termini[0] in range(self.switch_start, self.switch_end)
+            ):
+                self.tlen_in_switch.append(pair.template_length)
 
             self._coalesce_into_cov(pair, self.allowSoftClips)
             self._process_frag_locus(pair)

@@ -110,15 +110,29 @@ def _process_candidate_list(
     is_flag=True,
     help="(Dev use) Output plots with the ends convolution panel.",
 )
-def exec_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, run_depr, conv):
+@click.option(
+    "--statplot",
+    is_flag=True,
+    help="(Dev use) Output plot with stats.",
+)
+def exec_main(
+    pick_root,
+    out_dir,
+    bin_size,
+    min_cov_depth,
+    ext_prop,
+    run_depr,
+    conv,
+    statplot,
+):
     if run_depr:
         raise ValueError("No deprecated function to run")
 
     else:
-        main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv)
+        main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot)
 
 
-def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv):
+def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot):
     # Determine MPI context
     mp_con = BasicMPIContext()
     comm = mp_con.comm
@@ -196,8 +210,13 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv):
         passfaildir = _process_candidate_list(
             candlist, align_charac, charac_local, ref, transcriptome
         )
+
+        # main plot path
         save_path = out_dir.joinpath(passfaildir, f"{ref}#{transcriptome}.png")
         save_path.parent.mkdir(exist_ok=True, parents=True)
+
+        # stat plot path
+        stat_path = out_dir.joinpath(passfaildir, f"{ref}#{transcriptome}_stats.png")
 
         # Calculate and set info for binned raw ends
         alignDat.bin_rawends(bin_size=bin_size)
@@ -216,6 +235,9 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv):
 
         else:
             pObj.default(save_path)
+
+        if statplot:
+            pObj.distribution_plots(stat_path)
 
     charac_local_arr = comm.gather(charac_local, root=0)
 

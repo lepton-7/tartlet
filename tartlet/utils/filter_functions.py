@@ -1,22 +1,37 @@
 from tart.utils.activity_inference import Candidate
 
 
-def default_check(cand: Candidate):
-    issues = []
-    warns = []
+class DefaultThresholds:
+    relative_size_bounds = 0.3
+    relative_cov_delta = -0.2
+    symmetric_peaks_pval = 0.05
 
-    if abs(cand.from_switch_end_relative) > 0.3:
-        issues.append(f"Too far from end (abs({cand.from_switch_end_relative})>0.3)")
-    if cand.rel_cov_delta > -0.2:
-        issues.append(f"Small drop ({cand.rel_cov_delta}>-0.2)")
-    if cand.symks_pval > 0.05:
-        warns.append("Symmetry check failed (>0.05)")
+    def __init__(self) -> None:
+        pass
+    
+    @staticmethod
+    def check(cand: Candidate):
+        issues = []
+        warns = []
 
-    if len(issues) > 0:
-        cand.note = ";".join(issues)
-        return "fail"
+        if abs(cand.from_switch_end_relative) > DefaultThresholds.relative_size_bounds:
+            issues.append(
+                f"Too far from end (abs({cand.from_switch_end_relative})>{DefaultThresholds.relative_size_bounds})"
+            )
+        if cand.rel_cov_delta > DefaultThresholds.relative_cov_delta:
+            issues.append(
+                f"Small drop ({cand.rel_cov_delta}>{DefaultThresholds.relative_cov_delta})"
+            )
+        if cand.symks_pval > DefaultThresholds.symmetric_peaks_pval:
+            warns.append(
+                f"Symmetry check failed (>{DefaultThresholds.symmetric_peaks_pval})"
+            )
 
-    else:
-        cand.note = ";".join(warns)
+        if len(issues) > 0:
+            cand.note = ";".join(issues)
+            return "fail"
 
-    return "pass"
+        else:
+            cand.note = ";".join(warns)
+
+        return "pass"

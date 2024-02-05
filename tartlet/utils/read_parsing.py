@@ -600,7 +600,7 @@ class AlignDat:
         self.sum_cov()
         return self
 
-    def sum_cov(self):
+    def sum_cov(self) -> None:
         """Sum the coverage arrays into an attribute."""
         for covtype in self.__coverage_types:
             self.summedcov = np.add(self.summedcov, self.__getattribute__(covtype))
@@ -611,7 +611,7 @@ class AlignDat:
         thresh: int,
         l: Optional[int] = None,
         r: Optional[int] = None,
-    ):
+    ) -> bool:
         covpicker = {
             "read": self.readcov,
             "inferred": self.infercov,
@@ -625,7 +625,7 @@ class AlignDat:
 
         return max(covpicker[covtype][l:r]) >= thresh
 
-    def bin_rawends(self, bin_size: int = 1):
+    def bin_rawends(self, bin_size: int = 1) -> None:
         """Bins then sums raw fragment ends within bins.
 
         Set attributes for binned ends and binned axis
@@ -647,7 +647,7 @@ class AlignDat:
 
         self.binned_ends[numbins - 1] = sum(self.rawends[self.bin_ax[numbins - 1] :])
 
-    def convolve_rawends(self, kernel):
+    def convolve_rawends(self, kernel) -> None:
         """Convolve the raw ends array with the normally-weighted kernal.
 
         Args:
@@ -699,6 +699,30 @@ class SegregatedAlignDat(AlignDat):
         ).process_pairs(pairs, allowSoftClips)
 
         return self
+
+    def sum_cov(self) -> None:
+        self.total.sum_cov()
+        self.of_3prime.sum_cov()
+        self.except_3prime.sum_cov()
+
+    def is_coverage_threshold(
+        self,
+        covtype: str,
+        thresh: int,
+        l: Optional[int] = None,
+        r: Optional[int] = None,
+    ) -> bool:
+        return self.total.is_coverage_threshold(covtype, thresh, l, r)
+
+    def bin_rawends(self, bin_size: int = 1) -> None:
+        self.total.bin_rawends(bin_size)
+        self.of_3prime.bin_rawends(bin_size)
+        self.except_3prime.bin_rawends(bin_size)
+
+    def convolve_rawends(self, kernel) -> None:
+        self.total.convolve_rawends(kernel)
+        self.of_3prime.convolve_rawends(kernel)
+        self.except_3prime.convolve_rawends(kernel)
 
 
 class SortedBAM:

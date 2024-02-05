@@ -6,6 +6,7 @@ import numpy.typing as npt
 from click import echo
 from typing import Optional
 from collections import defaultdict
+from tart.utils.filter_functions import DefaultThresholds as fil
 
 
 class Read:
@@ -655,6 +656,51 @@ class AlignDat:
         self.convends = np.convolve(self.rawends, kernel, "same")
 
 
+class SegregatedAlignDat(AlignDat):
+    def __init__(self, ref: str, reflength: int, boundsDict: dict[str, list]) -> None:
+        self.ref = ref
+        self.ref_length = reflength
+        self.bounds_dict = boundsDict
+
+        self.of_3prime: AlignDat
+        self.except_3prime: AlignDat
+        self.total: AlignDat
+
+        self._pairs_of3prime: list[ReadPair] = []
+        self._pairs_except3prime: list[ReadPair] = []
+
+        self._set_refrelative_switch_bounds()
+
+    def process_pairs(
+        self, pairs: list[ReadPair], allowSoftClips: bool
+    ) -> "SegregatedAlignDat":
+
+        marg = int(abs(self.switch_end - self.switch_start) * fil.relative_size_bounds)
+        endmargins = (self.switch_start - marg, self.switch_end + marg)
+
+        for pair in pairs:
+            end_pos = pair.fragment_termini[1]
+
+            if end_pos >= endmargins[0] and end_pos <= endmargins[1]:
+                self._pairs_of3prime.append(pair)
+            else:
+                self._pairs_except3prime.append(pair)
+
+        self.of_3prime = AlignDat(
+            self.ref, self.ref_length, self.bounds_dict
+        ).process_pairs(self._pairs_of3prime, allowSoftClips)
+
+        self.except_3prime = AlignDat(
+            self.ref, self.ref_length, self.bounds_dict
+        ).process_pairs(self._pairs_except3prime, allowSoftClips)
+
+        self.total = AlignDat(
+            self.ref, self.ref_length, self.bounds_dict
+        ).process_pairs(pairs, allowSoftClips)
+
+        return self
+
+
 class SortedBAM:
     """Wrapper around a sorted BAM file to abstract away feature extraction"""
 
@@ -719,7 +765,9 @@ class SortedBAM:
 
         return toRet
 
-    def generate_ref_alignment_data(self, allowSoftClips: bool) -> list[AlignDat]:
+    def generate_ref_alignment_data(
+        self, allowSoftClips: bool
+    ) -> list[SegregatedAlignDat]:
         """Generate alignment data for each reference found in the sorted BAM using all aligned reads/read pairs and return as a list.
 
         Args:
@@ -731,7 +779,7 @@ class SortedBAM:
         Returns:
             list[AlignDat]: Alignment data for each reference.
         """
-        data: list[AlignDat] = []
+        data: list[SegregatedAlignDat] = []
 
         for ref in self.ref_list:
             # The + 1 is to offset downstream plot x-axis to seem 1-indexed
@@ -740,7 +788,7 @@ class SortedBAM:
             boundDict = self.ref_loc_dict[ref]
 
             data.append(
-                AlignDat(ref, reflength, boundDict).process_pairs(
+                SegregatedAlignDat(ref, reflength, boundDict).process_pairs(
                     readpairs, allowSoftClips
                 )
             )

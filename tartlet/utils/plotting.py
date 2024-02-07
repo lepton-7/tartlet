@@ -330,7 +330,7 @@ class CoveragePlot:
             save_path (str): Save path. Parent directories must exist.
         """
         fig, ax = plt.subplots(
-            3,
+            4,
             1,
             sharex=True,
             figsize=(20, 10),
@@ -340,9 +340,9 @@ class CoveragePlot:
         )
         fig.suptitle(f"{self._dat.ref}")
 
-        # self._coverage_panel(ax[0])
+        self._coverage_panel(ax[2])
         self._split_coverage_panels(ax[0], ax[1])
-        self._conv_ends_panel(ax[2])
+        self._conv_ends_panel(ax[-1])
 
         fig.savefig(f"{save_path}")
 

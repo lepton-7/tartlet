@@ -6,10 +6,10 @@ import tarfile
 from glob import glob
 from pathlib import Path
 from tart.utils.plotting import CoveragePlot
-from tart.utils.read_parsing import AlignDat
+from tart.utils.read_parsing import AlignDat, SegregatedAlignDat
 from tart.utils.mpi_context import BasicMPIContext
 from tart.utils.activity_inference import Candidate
-from tart.utils.filter_functions import default_check
+from tart.utils.filter_functions import DefaultThresholds as checker
 from tart.utils.activity_inference import has_candidate_peak
 
 
@@ -47,7 +47,7 @@ def _process_candidate_list(
         align_charac = {}
         align_charac["rowid"] = ref
         align_charac["transcriptome"] = str(transcriptome)
-        decision = default_check(cand)
+        decision = checker.check(cand)
         align_charac["decision"] = decision
 
         if decision == "pass":
@@ -59,7 +59,7 @@ def _process_candidate_list(
     align_charac = {}
     align_charac["rowid"] = ref
     align_charac["transcriptome"] = str(transcriptome)
-    decision = default_check(candlist[0])
+    decision = checker.check(candlist[0])
     align_charac["decision"] = decision
     _log_cand_charac(align_charac, candlist[0])
     charac_local.append(align_charac)
@@ -171,7 +171,8 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statp
         with tarfile.open(pick_root, "r:gz") as picktar:
             try:
                 with picktar.extractfile(pick_file) as f:  # type: ignore
-                    alignDat: AlignDat = pickle.load(f)
+                    segmented: SegregatedAlignDat = pickle.load(f)
+                    alignDat: AlignDat = segmented.total
             except KeyError:
                 print(
                     f"{pick_file} not found in archive {pick_root} on worker rank {rank}"
@@ -196,9 +197,9 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statp
         # that failed the filter
         max_cov = max(alignDat.readcov[alignDat.switch_start : alignDat.switch_end])
         if max_cov < min_cov_depth:
-            align_charac[
-                "decision_note"
-            ] = f"Minimum coverage not reached ({max_cov}<{min_cov_depth})"
+            align_charac["decision_note"] = (
+                f"Minimum coverage not reached ({max_cov}<{min_cov_depth})"
+            )
             charac_local.append(align_charac)
             continue
 
@@ -219,7 +220,7 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statp
         stat_path = out_dir.joinpath(passfaildir, f"{ref}#{transcriptome}_stats.png")
 
         # Calculate and set info for binned raw ends
-        alignDat.bin_rawends(bin_size=bin_size)
+        segmented.bin_rawends(bin_size=bin_size)
 
         # We still want to see a large region around the switch in the plots
         lplot = 1.0 if lmarg < 1.0 else lmarg
@@ -229,7 +230,7 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statp
         rbuff = int(switch_size * rplot)
         end_buffers = [lbuff, rbuff]
 
-        pObj = CoveragePlot(alignDat, end_buffers)
+        pObj = CoveragePlot(segmented, end_buffers)
         if conv:
             pObj._with_conv(save_path)
 

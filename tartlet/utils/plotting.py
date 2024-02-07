@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from math import ceil
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
-from tart.utils.read_parsing import AlignDat
+from tart.utils.read_parsing import AlignDat, SegregatedAlignDat
 from tart.utils.activity_inference import _gen_kernel
 
 
@@ -13,7 +13,10 @@ class CoveragePlot:
     """Handle plotting of alignment data."""
 
     def __init__(
-        self, alignDat: AlignDat, end_buffers: list[int], palette: str = "heavypastel"
+        self,
+        alignDat: SegregatedAlignDat,
+        end_buffers: list[int],
+        palette: str = "heavypastel",
     ) -> None:
         self.palette_picker = {
             "apricots": {
@@ -72,7 +75,8 @@ class CoveragePlot:
         # https://matplotlib.org/stable/_images/sphx_glr_named_colors_003_2_00x.png
         self.palette = self.palette_picker[palette]
 
-        self._dat = alignDat
+        self._dat = alignDat.total
+        self._segregated = alignDat
 
         self.lbuff = end_buffers[0]
         self.rbuff = end_buffers[1]
@@ -254,7 +258,7 @@ class CoveragePlot:
         ax.legend(loc="upper right")
         ax.set_ylabel("Count")
 
-    def default(self, save_path: str | Path):
+    def default_depr(self, save_path: str | Path):
         """Generate the default reference alignment plot and save to file.
 
         Args:
@@ -277,6 +281,9 @@ class CoveragePlot:
         fig.savefig(f"{save_path}")
 
         plt.close()
+
+    def default(self, save_path: str | Path):
+        pass
 
     def distribution_plots(self, save_path: str | Path):
         """Statistic plot for a riboswitch alignment data object.
@@ -323,7 +330,7 @@ class CoveragePlot:
             save_path (str): Save path. Parent directories must exist.
         """
         fig, ax = plt.subplots(
-            2,
+            3,
             1,
             sharex=True,
             figsize=(20, 10),
@@ -333,12 +340,70 @@ class CoveragePlot:
         )
         fig.suptitle(f"{self._dat.ref}")
 
-        self._coverage_panel(ax[0])
-        self._conv_ends_panel(ax[1])
+        # self._coverage_panel(ax[0])
+        self._split_coverage_panels(ax[0], ax[1])
+        self._conv_ends_panel(ax[2])
 
         fig.savefig(f"{save_path}")
 
         plt.close()
+
+    def _split_coverage_panels(self, ax3p: Axes, axnot3p: Axes):
+        counts3p = {
+            "Inferred": self._segregated.of_3prime.infercov,
+            "Overlapped": self._segregated.of_3prime.overlapcov,
+            "Read": self._segregated.of_3prime.readcov,
+            "Termini": self._segregated.of_3prime.terminalcov,
+            "Clipped": self._segregated.of_3prime.clipcov,
+        }
+
+        countsno3p = {
+            "Inferred": self._segregated.except_3prime.infercov,
+            "Overlapped": self._segregated.except_3prime.overlapcov,
+            "Read": self._segregated.except_3prime.readcov,
+            "Termini": self._segregated.except_3prime.terminalcov,
+            "Clipped": self._segregated.except_3prime.clipcov,
+        }
+
+        bottom3p = np.zeros(len(self.x))
+
+        for type, count in counts3p.items():
+            ax3p.bar(
+                self.x[self.buffstart : self.buffend],
+                count[self.buffstart : self.buffend],
+                label=type,
+                bottom=bottom3p[self.buffstart : self.buffend],
+                color=self.palette[type],
+                width=1,
+                align="edge",
+            )
+
+            bottom3p += count
+
+        ax3p.set_facecolor(self.palette["axback"])
+        ax3p.set_title("Fragment coverage")
+        ax3p.legend(loc="upper right")
+        ax3p.set_ylabel("Count")
+
+        bottomno3p = np.zeros(len(self.x))
+
+        for type, count in countsno3p.items():
+            axnot3p.bar(
+                self.x[self.buffstart : self.buffend],
+                count[self.buffstart : self.buffend],
+                label=type,
+                bottom=bottomno3p[self.buffstart : self.buffend],
+                color=self.palette[type],
+                width=1,
+                align="edge",
+            )
+
+            bottomno3p += count
+
+        axnot3p.set_facecolor(self.palette["axback"])
+        axnot3p.set_title("Fragment coverage")
+        axnot3p.legend(loc="upper right")
+        axnot3p.set_ylabel("Count")
 
     def set_palette(self, palette):
         self.palette = self.palette_picker[palette]

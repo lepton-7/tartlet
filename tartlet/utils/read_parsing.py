@@ -3,10 +3,11 @@ import pysam
 import numpy as np
 import numpy.typing as npt
 
+# import tart.utils.filter_functions as fil
+
 from click import echo
 from typing import Optional
 from collections import defaultdict
-from tart.utils.filter_functions import DefaultThresholds as fil
 
 
 class Read:
@@ -45,9 +46,9 @@ class Read:
 
         # The tail is the start end of the read
         self.tail = (
-            self.block_loci[0][0]
+            self.block_loci[-1][-1]
             if self.orientation == "R"
-            else self.block_loci[-1][-1]
+            else self.block_loci[0][0]
         )
 
     def _split_cigar(self):
@@ -656,43 +657,79 @@ class AlignDat:
         self.convends = np.convolve(self.rawends, kernel, "same")
 
 
-class SegregatedAlignDat(AlignDat):
+class SegregatedAlignDat:
     def __init__(self, ref: str, reflength: int, boundsDict: dict[str, list]) -> None:
         self.ref = ref
         self.ref_length = reflength
         self.bounds_dict = boundsDict
 
-        self.of_3prime: AlignDat
-        self.except_3prime: AlignDat
-        self.total: AlignDat
+        # self.of_3prime: Optional[AlignDat] = None
+        # self.except_3prime: Optional[AlignDat] = None
+        # self.total: Optional[AlignDat] = None
 
-        self._pairs_of3prime: list[ReadPair] = []
-        self._pairs_except3prime: list[ReadPair] = []
+        # self._pairs_of3prime: list[ReadPair] = []
+        # self._pairs_except3prime: list[ReadPair] = []
+
+        self.ref_bounds = boundsDict["ref"]
+        self.orf_bounds = boundsDict["orf"]
 
         self._set_refrelative_switch_bounds()
 
-    def process_pairs(
+    def _set_refrelative_switch_bounds(self) -> None:
+        """Starting from the riboswitch locus relative to source genome
+        indexing encoded in the ref string, calculates the riboswitch
+        locus indices relative to the start of the alignment reference.
+        """
+        splits = self.ref.split("#")
+
+        # Switch bounds are inclusive
+        if splits[-1] == "+":
+            self.switch_start = int(splits[-3]) - self.ref_bounds[0]
+            self.switch_end = int(splits[-2]) - self.ref_bounds[0]
+
+            self.orf_start = int(self.orf_bounds[0] - self.ref_bounds[0])
+            self.orf_end = int(self.orf_bounds[1] - self.ref_bounds[0])
+
+        else:
+            # - strands need to be processed separately because the seq
+            # is revcomp'd during ref generation itself
+            self.switch_start = self.ref_bounds[1] - int(splits[-3])
+            self.switch_end = self.ref_bounds[1] - int(splits[-2])
+
+            self.orf_start = int(self.ref_bounds[1] - self.orf_bounds[0])
+            self.orf_end = int(self.ref_bounds[1] - self.orf_bounds[1])
+
+    def new_process_pairs(
         self, pairs: list[ReadPair], allowSoftClips: bool
     ) -> "SegregatedAlignDat":
 
-        marg = int(abs(self.switch_end - self.switch_start) * fil.relative_size_bounds)
+        #  FIX LATER HOLY SHIT
+        # marg = int(
+        #     abs(self.switch_end - self.switch_start)
+        #     * fil.DefaultThresholds.relative_size_bounds
+        # )
+
+        marg = int(abs(self.switch_end - self.switch_start) * 0.3)
         endmargins = (self.switch_start - marg, self.switch_end + marg)
+
+        _pairs_of3prime: list[ReadPair] = []
+        _pairs_except3prime: list[ReadPair] = []
 
         for pair in pairs:
             end_pos = pair.fragment_termini[1]
 
             if end_pos >= endmargins[0] and end_pos <= endmargins[1]:
-                self._pairs_of3prime.append(pair)
+                _pairs_of3prime.append(pair)
             else:
-                self._pairs_except3prime.append(pair)
+                _pairs_except3prime.append(pair)
 
         self.of_3prime = AlignDat(
             self.ref, self.ref_length, self.bounds_dict
-        ).process_pairs(self._pairs_of3prime, allowSoftClips)
+        ).process_pairs(_pairs_of3prime, allowSoftClips)
 
         self.except_3prime = AlignDat(
             self.ref, self.ref_length, self.bounds_dict
-        ).process_pairs(self._pairs_except3prime, allowSoftClips)
+        ).process_pairs(_pairs_except3prime, allowSoftClips)
 
         self.total = AlignDat(
             self.ref, self.ref_length, self.bounds_dict
@@ -712,7 +749,8 @@ class SegregatedAlignDat(AlignDat):
         l: Optional[int] = None,
         r: Optional[int] = None,
     ) -> bool:
-        return self.total.is_coverage_threshold(covtype, thresh, l, r)
+        # return self.total.is_coverage_threshold(covtype, thresh, l, r)
+        return True
 
     def bin_rawends(self, bin_size: int = 1) -> None:
         self.total.bin_rawends(bin_size)
@@ -812,7 +850,7 @@ class SortedBAM:
             boundDict = self.ref_loc_dict[ref]
 
             data.append(
-                SegregatedAlignDat(ref, reflength, boundDict).process_pairs(
+                SegregatedAlignDat(ref, reflength, boundDict).new_process_pairs(
                     readpairs, allowSoftClips
                 )
             )

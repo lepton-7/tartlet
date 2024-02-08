@@ -332,34 +332,6 @@ def coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
     return raw_cov_drop
 
 
-def peak_out_of_cov_delta(sorteddelta: list[list[int]], i: int):
-    """DEPRECATED
-
-    Checks whether the coverage delta of a given element is outside the
-    range of deltas constituted by the rest of the list without the element being tested.
-
-    Args:
-        sorteddelta (list): List of deltas, ideally sorted increasingly by
-                            absolute distance of the source Peak from the
-                            riboswitch end.
-        i (int): Subject delta index in sorteddelta.
-
-    Returns:
-        tuple: (bool, list) -> boolean is True if the subject coverage delta
-               is negative and the minumum delta in sorteddelta.
-    """
-    # Find coverage drops across peaks without cand
-    cov_nocand = []
-    just_deltas = []
-    cov_nocand.extend(sorteddelta[0:i])
-    cov_nocand.extend(sorteddelta[i + 1 :])
-
-    return (
-        sorteddelta[i][0] <= min([x[0] for x in cov_nocand]) and sorteddelta[i][0] < 0,
-        cov_nocand,
-    )
-
-
 def peak_significance(sorteddelta: list[list[int]], i: int) -> tuple[float, list]:
     """Sets up a multivariate Gaussian using the coverage drop and peak width,
     and calculate the p-value of sampling the peak from the given distribution.

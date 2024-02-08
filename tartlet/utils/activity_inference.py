@@ -398,7 +398,7 @@ def peak_significance(sorteddelta: list[list[int]], i: int) -> tuple[float, list
 def has_candidate_peak(
     alignDat: AlignDat,
     kernel_size: int = 51,
-    kernel_stdev: int = 3,
+    kernel_stdev: float = 1.5,
     left_margin=1.0,
     right_margin=1.0,
 ):

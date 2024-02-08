@@ -269,7 +269,7 @@ class Candidate(Peak):
         self.end_symmetry_stat()
 
 
-def find_peaks(arr, switch_end, l: int = 0, u: int = -1):
+def _find_peaks(arr, switch_end, l: int = 0, u: int = -1):
     """Finds peaks in the given convolved array.
 
     Args:
@@ -313,7 +313,7 @@ def _gen_kernel(kernel_size: int = 21, std_dev: float = 3.0):
     return kernel
 
 
-def coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
+def _coverage_delta_per_peak(peaks: list, sumcov: npt.NDArray[np.float64]):
     """Helper function to find coverage deltas across a list of Peaks.
 
     Args:
@@ -387,13 +387,13 @@ def has_candidate_peak(
     relevant_l = alignDat.switch_start - int(switch_size * left_margin)
     relevant_r = alignDat.switch_end + int(switch_size * right_margin)
 
-    peaks = find_peaks(alignDat.convends, switch_end, relevant_l, relevant_r)
+    peaks = _find_peaks(alignDat.convends, switch_end, relevant_l, relevant_r)
 
     # Sort peaks in order of increasing absolute distance from riboswitch end
     close_peaks = sorted(peaks, key=operator.attrgetter("abs_from_switch_end"))
 
     # Record how coverage is changed by identified peaks in the region of interest
-    cov_delta = coverage_delta_per_peak(close_peaks, alignDat.summedcov)
+    cov_delta = _coverage_delta_per_peak(close_peaks, alignDat.summedcov)
 
     toRet: list[Candidate] = []
     for i, cand in enumerate(close_peaks):

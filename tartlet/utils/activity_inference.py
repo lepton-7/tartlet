@@ -266,7 +266,7 @@ class Candidate(Peak):
         # that ended in this candidate.
         self.set_frags_ending_at_peak(alignDat.fragments)
 
-        self.end_symmetry_stat()
+        # self.end_symmetry_stat()
 
 
 def _find_peaks(arr, switch_end, l: int = 0, u: int = -1):
@@ -374,6 +374,18 @@ def has_candidate_peak(
     left_margin=1.0,
     right_margin=1.0,
 ):
+    """DEPR SOON
+
+    Args:
+        alignDat (AlignDat): _description_
+        kernel_size (int, optional): _description_. Defaults to 51.
+        kernel_stdev (float, optional): _description_. Defaults to 1.5.
+        left_margin (float, optional): _description_. Defaults to 1.0.
+        right_margin (float, optional): _description_. Defaults to 1.0.
+
+    Returns:
+        _type_: _description_
+    """
     kernel = _gen_kernel(kernel_size, kernel_stdev)
     alignDat.convolve_rawends(kernel)
 

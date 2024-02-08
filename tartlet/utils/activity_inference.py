@@ -410,3 +410,49 @@ def has_candidate_peak(
             continue
 
     return toRet
+
+
+def get_peaks(
+    alignDat: AlignDat,
+    kernel_size: int = 51,
+    kernel_stdev: float = 1.5,
+    ss_margins: tuple | list = (1.0, 1.0),
+    reg_of_i: tuple | list = (0.3, 0.3),
+):
+    kernel = _gen_kernel(kernel_size, kernel_stdev)
+    alignDat.convolve_rawends(kernel)
+
+    # - strand riboswitches are reverse complemented during the reference
+    # generation, so the right end in the reference is still the 3' end
+    switch_end = alignDat.switch_end
+    switch_size = alignDat.switch_end - alignDat.switch_start
+
+    # Set relevant regions to compare candidates within ± switch size
+    # proportion outside the switch
+    searchspace_l = alignDat.switch_start - int(switch_size * ss_margins[0])
+    searchspace_r = alignDat.switch_end + int(switch_size * ss_margins[1])
+
+    # Sets the region of interest around the riboswitch to expect transcription events
+    roi_l = alignDat.switch_end - int(switch_size * reg_of_i[0])
+    roi_r = alignDat.switch_end + int(switch_size * reg_of_i[1])
+
+    peaks = _find_peaks(alignDat.convends, switch_end, searchspace_l, searchspace_r)
+
+    # Sort peaks in order of increasing absolute distance from riboswitch end
+    close_peaks = sorted(peaks, key=operator.attrgetter("abs_from_switch_end"))
+
+    # Record how coverage is changed by identified peaks in the search space
+    cov_delta = _coverage_delta_per_peak(close_peaks, alignDat.summedcov)
+
+    for i, cand in enumerate(close_peaks):
+        try:
+            pval, nocand_cov_delta = peak_significance(cov_delta, i)
+        except ValueError:  # Haven't yet figured out why multivariate fails
+            pval, nocand_cov_delta = 1, [None]
+            print()
+        if cand.summit >= roi_l and cand.summit <= roi_r:
+            cand_obj = Candidate(cand, switch_size, nocand_cov_delta, pval, alignDat)
+            yield cand_obj
+
+        else:
+            continue

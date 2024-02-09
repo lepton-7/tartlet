@@ -160,6 +160,11 @@ def _process_candidate_list(
     "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
 )
 @click.option(
+    "--noplots",
+    is_flag=True,
+    help="(Dev use) Suppresses all plot generation.",
+)
+@click.option(
     "--conv",
     is_flag=True,
     help="(Dev use) Output plots with the ends convolution panel.",
@@ -176,6 +181,7 @@ def exec_main(
     min_cov_depth,
     ext_prop,
     run_depr,
+    noplots,
     conv,
     statplot,
 ):
@@ -184,10 +190,21 @@ def exec_main(
         # raise ValueError("No deprecated function to run")
 
     else:
-        main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot)
+        main(
+            pick_root,
+            out_dir,
+            bin_size,
+            min_cov_depth,
+            ext_prop,
+            noplots,
+            conv,
+            statplot,
+        )
 
 
-def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot):
+def main(
+    pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, noplots, conv, statplot
+):
     # Determine MPI context ---------------------------------------------------
     mp_con = BasicMPIContext()
     comm = mp_con.comm
@@ -287,13 +304,13 @@ def main(pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statp
         end_buffers = [lbuff, rbuff]
 
         pObj = CoveragePlot(segmented, end_buffers)
-        if conv:
+        if conv and not noplots:
             pObj._with_conv(save_path)
 
-        else:
+        elif not noplots:
             pObj.default(save_path)
 
-        if statplot:
+        if statplot and not noplots:
             pObj.distribution_plots(stat_path)
 
     peak_log_arr = comm.gather(peak_log_local, root=0)

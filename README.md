@@ -14,6 +14,8 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **b_sub_tilburg2022_acc.txt**: Run accession list for *Bacillus subtilis* str. 168 from [Tilburg 2022](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9049611/) ([GSE169409](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE169409)). *These reads may not be paired since the fasterq-dump did not produce paired files*.
 
+**b_sub_smith2023_acc.txt**: Run accession for *Bacillus subtilis* str. 168 from [GSE226559](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE226559). List captures all runs 65.5GB.
+
 ---
 *<u>Turns out HISAT-2 could not process these because they seem to be single-end reads packed as paired-end. Need to be thrown out</u>*
 

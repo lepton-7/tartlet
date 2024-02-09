@@ -25,9 +25,9 @@ class DefaultThresholds:
             issues.append(
                 f"Too far from end (abs({cand.from_switch_end_relative:.2f}) > {d.relative_size_bounds})"
             )
-        if cand.rel_cov_delta > d.relative_cov_delta:
+        if cand.stable_rel_cov_delta > d.relative_cov_delta:
             issues.append(
-                f"Small drop ({cand.rel_cov_delta:.2f} > {d.relative_cov_delta})"
+                f"Small drop ({cand.stable_rel_cov_delta:.2f} > {d.relative_cov_delta})"
             )
 
         # if cand.symks_pval > d.symmetric_peaks_pval:

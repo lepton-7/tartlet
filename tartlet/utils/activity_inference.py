@@ -165,7 +165,9 @@ class Peak:
         return sumcov[self.right] - sumcov[self.left]
 
     def find_relative_coverage_delta(self, sumcov: npt.NDArray[np.float64]) -> float:
-        """Computes the change in summed coverage across the peak (center ± half-width) relative to the summed coverage at the lower bound (center - half-width) of the peak.
+        """DEPR
+
+        Computes the change in summed coverage across the peak (center ± half-width) relative to the summed coverage at the lower bound (center - half-width) of the peak.
 
         Args:
             sumcov (list): Coverage summed across actual, inferred, and clipped reads per base.
@@ -175,6 +177,20 @@ class Peak:
         """
 
         return self.find_absolute_coverage_delta(sumcov) / sumcov[self.left]
+
+    def find_stable_relative_coverage_delta(
+        self, sumcov: npt.NDArray[np.float64], avg_coverage: float
+    ) -> float:
+        """Compute fragment coverage delta across the entire peak relative to the average fragment coverage across the riboswitch.
+
+        Args:
+            sumcov (npt.NDArray[np.float64]): Summed fragment coverage array.
+            avg_coverage (float): Average fragment coverage across riboswitch.
+
+        Returns:
+            float: The "stable" relative delta coverage across this peak.
+        """
+        return self.find_absolute_coverage_delta(sumcov) / avg_coverage
 
     def set_frags_ending_at_peak(self, fragments: list[list[tuple]]):
         """Set attributes for the distribution of start positions and end positions of fragments that end in this Peak.
@@ -252,7 +268,13 @@ class Candidate(Peak):
         )
 
         self.abs_cov_delta = self.find_absolute_coverage_delta(alignDat.summedcov)
-        self.rel_cov_delta = self.find_relative_coverage_delta(alignDat.summedcov)
+
+        self.rel_cov_delta = self.find_relative_coverage_delta(
+            alignDat.summedcov
+        )  # TODO: Decide attribute deprecation
+        self.stable_rel_cov_delta = self.find_stable_relative_coverage_delta(
+            alignDat.summedcov, alignDat.avg_switch_frag_cov
+        )
 
         self.switch_size = switch_size
         self.from_switch_end_relative = self.from_switch_end / self.switch_size
@@ -374,7 +396,7 @@ def has_candidate_peak(
     left_margin=1.0,
     right_margin=1.0,
 ):
-    """DEPR SOON
+    """DEPR
 
     Args:
         alignDat (AlignDat): _description_

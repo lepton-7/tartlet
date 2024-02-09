@@ -14,12 +14,18 @@ from tart.utils.activity_inference import has_candidate_peak, get_peaks
 
 
 def _log_cand_charac(peaklog: dict, cand: Candidate):
-    peaklog["coverage_delta"] = cand.abs_cov_delta
+    peaklog["coverage_delta_absolute"] = cand.abs_cov_delta
     peaklog["coverage_delta_pval"] = cand.coverage_drop_pvalue
     peaklog["peak_summit"] = cand.summit
     peaklog["peak_width"] = cand.width
     # peaklog["peak_l/r"] = (cand.left, cand.right)
     peaklog["coverage_delta_relative"] = cand.rel_cov_delta
+
+    try:
+        peaklog["coverage_delta_stable_relative"] = cand.stable_rel_cov_delta
+    except AttributeError:
+        pass
+
     peaklog["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)
 
     peaklog["from_riboswith_end"] = cand.from_switch_end

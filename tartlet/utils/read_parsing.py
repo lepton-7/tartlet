@@ -602,9 +602,14 @@ class AlignDat:
         return self
 
     def sum_cov(self) -> None:
-        """Sum the coverage arrays into an attribute."""
+        """Sum the coverage arrays into an attribute. Also computes average fragment coverage across the riboswitch."""
         for covtype in self.__coverage_types:
             self.summedcov = np.add(self.summedcov, self.__getattribute__(covtype))
+
+        # TODO: Check whether self.switch_start and self.switch_end are typical [) bounds.
+        self.avg_switch_frag_cov: float = sum(
+            self.summedcov[self.switch_start : self.switch_end]
+        ) / abs(self.switch_end - self.switch_start)
 
     def is_coverage_threshold(
         self,

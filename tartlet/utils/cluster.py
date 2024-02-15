@@ -66,6 +66,8 @@ class Cluster:
         delta_var_arr = []
         delta_meanp_arr = []
         delta_varp_arr = []
+        exset_delta_mean_arr = []
+        exset_delta_variance_arr = []
 
         # Iterate over each rowid and cluster combination
         for i, row in df.iterrows():
@@ -99,12 +101,16 @@ class Cluster:
             delta_var_arr.append(np.var(peakset[self.statdim]))
             delta_meanp_arr.append(meanp)
             delta_varp_arr.append(varp)
+            exset_delta_mean_arr.append(np.mean(exset[self.statdim]))
+            exset_delta_variance_arr.append(np.var(exset[self.statdim]))
 
         df["pos_mean"] = pos_mean_arr
         df["pos_variance"] = pos_var_arr
         df["delta_mean"] = delta_mean_arr
+        df["noiseset_delta_mean"] = exset_delta_mean_arr
         df["delta_mean_pval"] = delta_meanp_arr
         df["delta_variance"] = delta_var_arr
+        df["noiseset_delta_variance"] = exset_delta_variance_arr
         df["delta_variance_pval"] = delta_varp_arr
 
         return df

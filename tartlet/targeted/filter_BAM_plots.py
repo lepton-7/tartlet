@@ -5,6 +5,7 @@ import tarfile
 
 from glob import glob
 from pathlib import Path
+from tart.utils.cluster import Cluster
 from tart.utils.plotting import CoveragePlot
 from tart.utils.read_parsing import AlignDat, SegregatedAlignDat
 from tart.utils.mpi_context import BasicMPIContext
@@ -232,7 +233,7 @@ def main(
     worker_list: list[str] = mp_con.generate_worker_list()
 
     # Keep track of peak log for each alignment
-    peak_log_local = []
+    peak_log_local: list[dict] = []
 
     # Iterate through alignment datafiles -------------------------------------
 
@@ -318,15 +319,20 @@ def main(
     if rank == 0:
         if peak_log_arr is None:
             raise TypeError("Gather failed")
-        log = []
+        log: list[dict] = []
         for instance_arr in peak_log_arr:
+            instance_arr: list[dict]
             log.extend(instance_arr)
 
         # Make dataframe
         # df = pd.DataFrame({"target_name": classes, "pass_rate": rates})
         # df.to_csv(f"{out_dir}/pass_rates.csv", index=False)
-        df = pd.DataFrame(log)
-        df.to_csv(f"{out_dir}/peak_log.csv", index=False)
+
+        # Cluster peaks for later plotting
+        peak_log, cluster_stats = Cluster(pd.DataFrame(log)).get()
+
+        peak_log.to_csv(f"{out_dir}/peak_log.csv", index=False)
+        cluster_stats.to_csv(f"{out_dir}/cluster_stats.csv", index=False)
 
 
 def depr_main(

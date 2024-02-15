@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import mannwhitneyu, levene
+from scipy.cluster.hierarchy import fclusterdata
 
 
 class Cluster:

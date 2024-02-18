@@ -1,6 +1,7 @@
 import click
 import requests
 
+from glob import glob
 from pathlib import Path
 from typing import Optional
 from subprocess import run, PIPE
@@ -91,7 +92,7 @@ def cmscan(
     out_dir: Path,
     cm_path: Path,
     options: tuple | list,
-    out_file: Optional[Path],
+    out_file: Optional[Path] = None,
     rank: int = 0,
     no_stats: bool = False,
 ):
@@ -139,8 +140,8 @@ def cmscan(
 
 
 def riboswitch_cmscan(
-    seq_file: str or Path,
-    out_dir: str or Path,
+    seq_file: str | Path,
+    out_dir: str | Path,
     options: tuple | list = [],
     ver: float = current_ver,
     **kwargs,
@@ -185,7 +186,7 @@ def riboswitch_cmscan(
 )
 @click.option("--no-stats", is_flag=True, help="Supresses cmscan output to the console")
 @click.argument("total_files", nargs=-1)
-def default_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats: bool):
+def default_scan_for_riboswitches(out_dir, total_files: tuple | list, no_stats: bool):
     """Runs input files against the latest (14.9) rfam riboswitch covariance models.
 
     Supports MPI acceleration.
@@ -196,8 +197,19 @@ def default_scan_for_riboswitches(out_dir, total_files: tuple or list, no_stats:
         no_stats (bool): Suppresses cmscan output.
     """
     # MPI setup
+
+    # Test if arg passed is a directory
+    p = Path(total_files[0])
+
+    if p.is_dir:
+        print("Argument passed is a directory; looking for .fna in directory.")
+        total_files = glob(f"{p}/*.fna")
+
     mp_con = BasicMPIContext([*total_files])
     worker_list = mp_con.generate_worker_list()
+
+    # Check if out_dir exists
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
 
     if mp_con.rank == 0:
         print(f"Started {mp_con.size} workers.")

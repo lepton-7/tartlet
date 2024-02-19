@@ -199,13 +199,13 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
 
     def write_step(classname, sub_d):
         # Write riboswitch sequences to disk
-        if rank > 0:
-            fpath = f"{out_dir}/{classname}.fna"
+        # if rank > 0:
+        fpath = f"{out_dir}/{classname}.fna"
 
-            with open(fpath, "w") as f:
-                for key, val in sub_d.items():
-                    f.write(">{}\n".format(key))
-                    f.write("{}\n".format(val))
+        with open(fpath, "w") as f:
+            for key, val in sub_d.items():
+                f.write(">{}\n".format(key))
+                f.write("{}\n".format(val))
 
     def multithreaded_writeout(num_switch_classes, seqs_ledger):
         # Setup a dummy list to be able to subscript in the for loop and
@@ -236,6 +236,7 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
 
     def unified_writeout(seqs_ledger):
         if rank == 0:
+            print("Starting unified write-out.")
             unified_dict = {}
             for _, sub_d in seqs_ledger.items():
                 unified_dict.update(sub_d)

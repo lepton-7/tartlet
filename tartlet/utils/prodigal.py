@@ -1,6 +1,7 @@
 import click
 import pandas as pd
 
+from glob import glob
 from pathlib import Path
 from Bio import SeqIO, SeqRecord
 from subprocess import run, PIPE
@@ -139,7 +140,7 @@ def prodigal(
     "-o", "--out-dir", required=True, help="Output directory for prodigal outputs."
 )
 @click.argument("total_files", nargs=-1)
-def default_prodigal(out_dir, total_files: tuple or list):
+def default_prodigal(out_dir, total_files: tuple | list):
     """Runs prodigal on the input files.
 
     Supports MPI acceleration.
@@ -150,7 +151,15 @@ def default_prodigal(out_dir, total_files: tuple or list):
     """
 
     # MPI setup
-    mp_con = BasicMPIContext([*total_files])
+    mp_con = BasicMPIContext()
+
+    if Path(total_files[0]).is_dir:
+        if mp_con.rank == 0:
+            print("Directory passed; searching for genomes (.fna) within directory.")
+
+        total_files = glob(f"{total_files[0]}/*.fna")
+
+    mp_con.set_full_list([*total_files])
     worker_list = mp_con.generate_worker_list()
 
     if mp_con.rank == 0:

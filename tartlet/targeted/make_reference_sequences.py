@@ -51,7 +51,12 @@ from tart.utils.mpi_context import BasicMPIContext
     show_default=True,
     help="Number of nucleotides downstream of riboswitches to capture in the generated reference sequence.",
 )
-def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
+@click.option(
+    "--unify",
+    is_flag=True,
+    help="(Dev use) Write all sequences to single file.",
+)
+def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
     # Read in the results table
     table = pd.read_csv(ledger_path)
 
@@ -110,7 +115,9 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
     if mp_con.is_active:
         for MAG_path in local_path_list:  # iterate over derep95 MAGs
             MAGDict = {x.id: str(x.seq) for x in SeqIO.parse(MAG_path, "fasta")}
-            subset = table[table["genome_accession"] == os.path.split(MAG_path)[-1][:-4]]
+            subset = table[
+                table["genome_accession"] == os.path.split(MAG_path)[-1][:-4]
+            ]
 
             for _, row in subset.iterrows():  # iterate over MAG riboswitches
                 # Infernal start and stop entries are relative to canonical 5' -> 3';
@@ -185,7 +192,10 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
 
     # broadcast the number of distinct switch class dicts in the ledger
     # so the extra threads can exit
-    num_switch_classes = comm.bcast(num_switch_classes, root=0)
+    if not unify:
+        num_switch_classes = comm.bcast(num_switch_classes, root=0)
+    else:
+        num_switch_classes = 0
 
     def write_step(classname, sub_d):
         # Write riboswitch sequences to disk
@@ -224,12 +234,23 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta):
             for classname, sub_d in seqs_ledger.items():
                 write_step(classname, sub_d)
 
+    def unified_writeout(seqs_ledger):
+        if rank == 0:
+            unified_dict = {}
+            for _, sub_d in seqs_ledger.items():
+                unified_dict.update(sub_d)
+
+            write_step("unified", unified_dict)
+
     # Each riboswitch class sub-dictionary is sent to a worker for disk writes
     # if there are enough workers for that. Otherwise the root performs the write out
 
-    if size > num_switch_classes:
+    if unify:
+        unified_writeout(seqs_ledger)
+
+    elif not unify and size > int(num_switch_classes):
         # Exit workers that are not needed
-        if rank > num_switch_classes:
+        if rank > int(num_switch_classes):
             raise SystemExit(0)
 
         if rank > 0:

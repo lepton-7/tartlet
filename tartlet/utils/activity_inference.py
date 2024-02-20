@@ -306,7 +306,7 @@ def _find_peaks(arr, switch_end, l: int = 0, u: int = -1):
     """
     ret: list[Peak] = []
 
-    u = len(arr) if u < 0 else u
+    u = len(arr) if (u < 0 or u > len(arr)) else u
 
     for i in range(l + 1, u - 1):
         if abs(arr[i]) > abs(arr[i - 1]) and abs(arr[i]) > abs(arr[i + 1]):

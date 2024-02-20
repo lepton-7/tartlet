@@ -79,14 +79,16 @@ def main(
         # The [:-11] removes the .sorted.bam suffix from the path, but Path objects are
         # not subscriptable, so it needs to be typecasted to str, sliced, then converted
         # back to a Path. Don't @ me this works just fine.
-        save_dir = Path(str(out_dir.joinpath(*bam_split[-2:]))[:-11])
-
-        # Make sure the directory exists; create if not.
-        save_dir.mkdir(parents=True, exist_ok=True)
+        # save_dir = Path(str(out_dir.joinpath(*bam_split[-2:]))[:-11])
 
         alignDat_arr = bam_wrap.generate_ref_alignment_data(allow_soft_clips)
 
         for alignDat in alignDat_arr:
+
+            # Construct save subdir based on ref name
+            save_dir = Path(str(out_dir.joinpath(alignDat.switch_class, bam_split[-1])))
+            save_dir.mkdir(parents=True, exist_ok=True)
+
             if outPlots and alignDat.is_coverage_threshold("read", min_coverage):
                 save_path = save_dir.joinpath(f"{alignDat.ref}.png")
                 CoveragePlot(alignDat, [40, 40]).default(save_path)

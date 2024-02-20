@@ -675,6 +675,8 @@ class SegregatedAlignDat(AlignDat):
         self.ref_bounds = boundsDict["ref"]
         self.orf_bounds = boundsDict["orf"]
 
+        self.switch_class = ref.split("#")[0]
+
         self._set_refrelative_switch_bounds()
 
     def process_pairs(

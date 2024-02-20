@@ -317,6 +317,13 @@ class AlignDat:
         """
         splits = self.ref.split("#")
 
+        # Validate orf bounds
+        try:
+            _ = int(self.orf_bounds[0])
+            _ = int(self.orf_bounds[1])
+        except ValueError:
+            self.orf_bounds = [0, 0]
+
         # Switch bounds are inclusive
         if splits[-1] == "+":
             self.switch_start = int(splits[-3]) - self.ref_bounds[0]

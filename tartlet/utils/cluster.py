@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from tart.utils.utils import print
 from scipy.stats import mannwhitneyu, levene
 from scipy.cluster.hierarchy import fclusterdata
 
@@ -28,8 +29,18 @@ class Cluster:
     def __cluster(self, df) -> pd.DataFrame:
         tdfs: list[pd.DataFrame] = []
 
+        try:
+            _ = df[self.rowid]
+        except KeyError:
+            print(f"df error. Returning unmodified argument.")
+            return df
+
         for rowid in pd.unique(df[self.rowid]):
-            tdf = df[df[self.rowid] == rowid].dropna(subset=self.feature_dims)
+            try:
+                tdf = df[df[self.rowid] == rowid].dropna(subset=self.feature_dims)
+            except:  # FIXME: Fix this properly
+                print(f"Skipping id: {rowid}.")
+                continue
 
             # FIXME: Make this somehow compatible with arbitrary dims and col names
             relpos = np.array(tdf[self.posdim])
@@ -42,7 +53,12 @@ class Cluster:
             # slow everything down ¯\_(ツ)_/¯. Hopefully this will allow easy user customisability
             # in the future
             clfunc = self.__default_cluster(relpos_reshaped)
-            tdf["cluster"] = clfunc()
+
+            try:
+                tdf["cluster"] = clfunc()
+            except:  # FIXME: Figure out what makes clustering break
+                print(f"Clustering broke. Skipping.")
+                continue
 
             tdfs.append(tdf)
 
@@ -86,14 +102,20 @@ class Cluster:
             ].dropna(subset=self.feature_dims)
 
             # Test if peakset mean delta is < exset mean delta
-            meanp = mannwhitneyu(
-                x=peakset[self.statdim], y=exset[self.statdim], alternative="less"
-            ).pvalue
+            try:
+                meanp = mannwhitneyu(
+                    x=peakset[self.statdim], y=exset[self.statdim], alternative="less"
+                ).pvalue
+            except ValueError:
+                meanp = 1.0
 
             # Test if peakset delta variance is ~= exset delta variance
-            varp = levene(
-                peakset[self.statdim], exset[self.statdim], center="median"
-            ).pvalue
+            try:
+                varp = levene(
+                    peakset[self.statdim], exset[self.statdim], center="median"
+                ).pvalue
+            except ValueError:
+                varp = 1.0
 
             pos_mean_arr.append(np.mean(peakset[self.posdim]))
             pos_var_arr.append(np.var(peakset[self.posdim]))

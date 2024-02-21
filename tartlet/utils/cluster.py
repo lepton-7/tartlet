@@ -32,7 +32,7 @@ class Cluster:
         try:
             _ = df[self.rowid]
         except KeyError:
-            print(f"df error. Returning unmodified argument.")
+            print(f"Df empty for clustering. Returning unmodified argument.")
             return df
 
         for rowid in pd.unique(df[self.rowid]):
@@ -67,6 +67,12 @@ class Cluster:
 
     def __compute_stats(self) -> pd.DataFrame:
         skel_list = []
+
+        try:
+            _ = self.df[self.rowid]
+        except KeyError:
+            print(f"Df empty for stats. Returning empty")
+            return self.df
 
         # Make the skeleton dataframe containing rowid and cluster columns
         for rowid in pd.unique(self.df[self.rowid]):

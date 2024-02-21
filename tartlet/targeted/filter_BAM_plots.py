@@ -331,8 +331,11 @@ def main(
         # Cluster peaks for later plotting
         peak_log, cluster_stats = Cluster(pd.DataFrame(log)).get()
 
-        peak_log.to_csv(f"{out_dir}/peak_log.csv", index=False)
-        cluster_stats.to_csv(f"{out_dir}/cluster_stats.csv", index=False)
+        if len(peak_log) > 0:
+            peak_log.to_csv(f"{out_dir}/peak_log.csv", index=False)
+            cluster_stats.to_csv(f"{out_dir}/cluster_stats.csv", index=False)
+        else:
+            print(f"{pick_root} seems empty. No tables exported.")
 
 
 def depr_main(

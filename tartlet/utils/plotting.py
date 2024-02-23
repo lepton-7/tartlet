@@ -283,7 +283,25 @@ class CoveragePlot:
         plt.close()
 
     def default(self, save_path: str | Path):
-        pass
+        # TODO: docstring; Implement this properly
+        fig, ax = plt.subplots(
+            4,
+            1,
+            sharex=True,
+            figsize=(20, 10),
+            dpi=100,
+            constrained_layout=True,
+            facecolor=self.palette["figback"],
+        )
+        fig.suptitle(f"{self._dat.ref}")
+
+        self._coverage_panel(ax[2])
+        self._split_coverage_panels(ax[0], ax[1])
+        self._binned_ends_panel(ax[-1])
+
+        fig.savefig(f"{save_path}")
+
+        plt.close()
 
     def distribution_plots(self, save_path: str | Path):
         """Statistic plot for a riboswitch alignment data object.

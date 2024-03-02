@@ -418,7 +418,10 @@ class AlignDat:
             inferred_regions.append((fend, rstart))
 
             # Overlap region between reads in a pair
-            overlapped_regions.append((rstart, fend))
+            adj_rstart = rstart + 1 if rstart == fstart else rstart
+            adj_fend = fend - 1 if fend == rend else fend
+
+            overlapped_regions.append((adj_rstart, adj_fend))
 
             # terminal bases
             terminal_regions.extend([(fstart, fstart + 1), (rend - 1, rend)])
@@ -448,6 +451,7 @@ class AlignDat:
                     # clipped region to right
                     clipped_regions.append((rend, rclip_end))
 
+        # TODO: Do this using np slicing to speed it up
         # Increment coverage arrays
         for start, end in read_regions:
             for i in range(start, end):

@@ -52,7 +52,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **x_albi_wimmer2023_acc**: Run accession list for *Xanthomonas albilineans* from [GSE229478](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE229478) 4.4GB.
 
-**p_salmo_gabriela2023_acc**: Run accession list for *Piscirickettsia salmonis* from [GSE235725](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235725). List only captures 4 out of the 9 runs 8.5GB.
+**p_salmo_gabriela2023_acc**: Run accession list for *Piscirickettsia salmonis* from  [Carril2023](https://pubmed.ncbi.nlm.nih.gov/37953796/) ([GSE235725](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235725)). List only captures 4 out of the 9 runs 8.5GB.
 
 **s_sanguinis_puccio2022_acc**: Run accession list for *Streptococcus sanguinis SK36* from [Puccio 2022](<https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8844241/>) ([GSE174672](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE174672) 3.8GB).
 
@@ -62,13 +62,13 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 ~~**n_gonorr_zachary2021_acc**: Run accession list for *Neisseria gonorrhoeae* from [Zachary 2021](https://pubmed.ncbi.nlm.nih.gov/34515630/) ([GSE177032](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE177032) 5GB).~~ *These were single ended.*
 
-**n_gonorr_cris2022_acc**: Run accession list for *Neisseria gonorrhoeae* from [GSE191020](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE191020) 23.9GB.
+**n_gonorr_cris2022_acc**: Run accession list for *Neisseria gonorrhoeae* from [Ray2022](https://journals.asm.org/doi/full/10.1128/iai.00009-22) ([GSE191020](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE191020)) 23.9GB.
 
 **a_kunk_seeger2023_acc**: Run accession list for *Apilactobacillus kunkeei* from [Seeger 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10496945/) ([GSE205998](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE205998) 500MB).
 
 **k_pneum_liu2023_acc**: Run accession list for *Klebsiella pneumoniae* from [GSE229867](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE229867) 2.1GB.
 
-**s_enter_typh_kant2022_acc**: Run accession list for *Salmonella enterica* subsp. enterica serovar Typhimurium from [GSE203342](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE203342) 13.9GB.
+**s_enter_typh_kant2022_acc**: Run accession list for *Salmonella enterica* subsp. enterica serovar Typhimurium from [Kant2023](https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3002051) ([GSE203342](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE203342)) 13.9GB.
 
 **a_baum_pokhrel2023_acc**: Run accession list for *Acinetobacter baumannii* from [GSE183334](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE183334) 3.8GB.
 
@@ -80,7 +80,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **d_vulg_gao2016_acc**: Run accession list for *Desulfovibrio vulgaris* str. Hildenborough from [Gao 2016](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5007762/) ([GSE78834](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE78834)) 2.8GB.
 
-**d_vulg_guo2019_acc**: Run accession list for *Desulfovibrio vulgaris* str. Hildenborough from [GSE101911](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101911) 7.9GB.
+**d_vulg_guo2019_acc**: Run accession list for *Desulfovibrio vulgaris* str. Hildenborough from [Chen2019](https://www.sciencedirect.com/science/article/pii/S0160412018326138) ([GSE101911](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE101911)) 7.9GB.
 
 **b_frag_fiebig2023_acc**: Run accession list for *Bacteroides fragilis* from [Fiebig 2023](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10197588/) ([GSE220692](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE220692)) 3.1GB.
 

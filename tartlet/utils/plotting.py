@@ -144,7 +144,7 @@ class CoveragePlot:
         try:
             conv_ends = self._dat.convends
         except AttributeError:
-            k = _gen_kernel(51, 3)
+            k = _gen_kernel(51, 1.5)
             self._dat.convolve_rawends(k)
 
         ax.bar(

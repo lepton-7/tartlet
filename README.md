@@ -52,7 +52,7 @@ TaRT is validated on published transcriptomic and metatranscriptomic datasets. D
 
 **x_albi_wimmer2023_acc**: Run accession list for *Xanthomonas albilineans* from [GSE229478](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE229478) 4.4GB.
 
-**p_salmo_gabriela2023_acc**: Run accession list for *Piscirickettsia salmonis* from  [Carril2023](https://pubmed.ncbi.nlm.nih.gov/37953796/) ([GSE235725](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235725)). List only captures 4 out of the 9 runs 8.5GB.
+**p_salmo_gabriela2023_acc**: Run accession list for *Piscirickettsia salmonis* from  [Carril2023](https://pubmed.ncbi.nlm.nih.gov/37953796/) ([GSE235725](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE235725)). List captures all 6 single culture runs out of the total 9 runs 17.8GB.
 
 **s_sanguinis_puccio2022_acc**: Run accession list for *Streptococcus sanguinis SK36* from [Puccio 2022](<https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8844241/>) ([GSE174672](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE174672) 3.8GB).
 

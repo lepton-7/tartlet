@@ -153,7 +153,7 @@ def default_prodigal(out_dir, total_files: tuple | list):
     # MPI setup
     mp_con = BasicMPIContext()
 
-    if Path(total_files[0]).is_dir:
+    if Path(total_files[0]).is_dir():
         if mp_con.rank == 0:
             print("Directory passed; searching for genomes (.fna) within directory.")
 

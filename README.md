@@ -116,6 +116,17 @@ Start an interactive shell on pitzer:
 srun -n 1 --cpus-per-task=48 --account=PDS0325 --time=1:00:00 --pty /bin/bash
 ```
 
+For updated list of validation set:
+
+```python
+import pandas as pd
+from pathlib import Path
+
+df = pd.read_csv(Path("validation/tables/inf_results.csv"))
+for x in sorted(pd.unique(df["dataset"])):
+    print(x)
+```
+
 Move job files to their own directories:
 
 ```bash
@@ -123,7 +134,6 @@ DSETS=(
     "a_baum"
     "a_fischeri_ES114"
     "a_kunk"
-    "a_rabiei"
     "b_anth"
     "b_frag"
     "b_pseudo"
@@ -141,7 +151,10 @@ DSETS=(
     "m_smeg"
     "m_tuber"
     "n_gonorr"
+    "p_aeru"
+    "p_cholor_aureo3084"
     "p_fluor"
+    "p_salmo"
     "s_coelicolor"
     "s_elon"
     "s_enter_typh"

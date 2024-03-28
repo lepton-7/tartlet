@@ -131,7 +131,7 @@ Move job files to their own directories:
 
 ```bash
 DSETS=(
-    "a_baum"
+    # "a_baum"
     "a_fischeri_ES114"
     "a_kunk"
     "b_anth"
@@ -140,7 +140,7 @@ DSETS=(
     "b_sub_168"
     "b_theta"
     "b_xyla"
-    "c_basil"
+    # "c_basil"
     "c_diff"
     "c_vibrioides"
     "d_vulg"

@@ -201,8 +201,8 @@ def default_scan_for_riboswitches(out_dir, total_files: tuple | list, no_stats: 
     # Test if arg passed is a directory
     p = Path(total_files[0])
 
-    if p.is_dir:
-        print("Argument passed is a directory; looking for .fna in directory.")
+    if p.is_dir():
+        print(f"Argument passed is a directory; looking for .fna in {p}.")
         total_files = glob(f"{p}/*.fna")
 
     mp_con = BasicMPIContext([*total_files])

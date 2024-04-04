@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from random import sample
 from tart.utils.utils import print
 from scipy.stats import mannwhitneyu, levene
 from scipy.cluster.hierarchy import fclusterdata
@@ -115,11 +116,9 @@ class Cluster:
             except ValueError:
                 meanp = 1.0
 
-            # Test if peakset delta variance is ~= exset delta variance
+            # Test against null -> peakset delta variance is ~= exset delta variance
             try:
-                varp = levene(
-                    peakset[self.statdim], exset[self.statdim], center="median"
-                ).pvalue
+                varp = self.__var_test(peakset[self.statdim], exset[self.statdim])
             except ValueError:
                 varp = 1.0
 
@@ -142,6 +141,38 @@ class Cluster:
         df["delta_variance_pval"] = delta_varp_arr
 
         return df
+
+    def __var_test(self, cut: pd.Series, exset: pd.Series):
+        n = len(cut)
+        exsize = len(exset)
+
+        # For the resampling to avoid a div by 0 error
+        adj = 1 if n > exsize else 0
+
+        # The CUT isn't large enough to begin with
+        if n < 3:
+            return 1.0
+
+        exshuff = list(exset)
+
+        # shuffle then subset to emulate in-place sampling-without-replacement
+        for _ in range(5):
+            exshuff = sample(exshuff, exsize)
+
+        # Collect at least rep comparisons to get a distribution of pvals
+        rep = 100
+        ex_collection = []
+        for _ in range((rep // (exsize // n + adj)) + 1):
+            ex_collection.extend(
+                [exshuff[i : i + n] for i in range(0, exsize, n) if i + n <= exsize]
+            )
+
+        # Levene's test on CUT against every sampled exset subset
+        plist = np.array(
+            map(lambda ex: levene(cut, ex, center="median").pvalue, ex_collection)
+        )
+
+        return np.percentile(plist, 50)
 
     def __default_cluster(self, X: np.ndarray):
         def wrapper():

@@ -103,26 +103,6 @@ class Peak:
         else:
             return False
 
-    def __compare(self, peak: "Peak", heightMarg: float = 0.1, widthMarg: int = 4):
-        """DEPRECATED
-
-        Compares two peaks. Returns true if peaks match within the defined margins.
-
-        Args:
-            peak (Peak): Comparison subject Peak object.
-            heightMarg (float, optional): Proportion of this Peak's margin within which to match peak. Defaults to 0.1.
-            widthMarg (int, optional): Nucleotide margin within which to match peak's width. Defaults to 4.
-
-        Returns:
-            bool: Whether the height and widths of the peak being compared fall wlthin the margins of this peak.
-        """
-        hprop = peak.height / self.height
-        wdiff = abs(self.width - peak.width)
-
-        return (
-            hprop > -1 - heightMarg and hprop < -1 + heightMarg and wdiff <= widthMarg
-        )
-
     def compare_ks(self, peak: "Peak", source_arr):
         """Uses the 2-sample KS test to compare fragment end distributions between peaks.
 
@@ -163,20 +143,6 @@ class Peak:
 
         # Bounds are already validated when determined
         return sumcov[self.right] - sumcov[self.left]
-
-    def find_relative_coverage_delta(self, sumcov: npt.NDArray[np.float64]) -> float:
-        """DEPR
-
-        Computes the change in summed coverage across the peak (center ± half-width) relative to the summed coverage at the lower bound (center - half-width) of the peak.
-
-        Args:
-            sumcov (list): Coverage summed across actual, inferred, and clipped reads per base.
-
-        Returns:
-            float: Change in summed coverage across the peak relative to coverage at the start of the peak.
-        """
-
-        return self.find_absolute_coverage_delta(sumcov) / sumcov[self.left]
 
     def find_stable_relative_coverage_delta(
         self, sumcov: npt.NDArray[np.float64], avg_coverage: float
@@ -269,9 +235,6 @@ class Candidate(Peak):
 
         self.abs_cov_delta = self.find_absolute_coverage_delta(alignDat.summedcov)
 
-        self.rel_cov_delta = self.find_relative_coverage_delta(
-            alignDat.summedcov
-        )  # TODO: Decide attribute deprecation
         self.stable_rel_cov_delta = self.find_stable_relative_coverage_delta(
             alignDat.summedcov, alignDat.avg_switch_frag_cov
         )
@@ -387,63 +350,6 @@ def peak_significance(sorteddelta: list[list[int]], i: int) -> tuple[float, list
         pval,
         cov_nocand,
     )
-
-
-def has_candidate_peak(
-    alignDat: AlignDat,
-    kernel_size: int = 51,
-    kernel_stdev: float = 1.5,
-    left_margin=1.0,
-    right_margin=1.0,
-):
-    """DEPR
-
-    Args:
-        alignDat (AlignDat): _description_
-        kernel_size (int, optional): _description_. Defaults to 51.
-        kernel_stdev (float, optional): _description_. Defaults to 1.5.
-        left_margin (float, optional): _description_. Defaults to 1.0.
-        right_margin (float, optional): _description_. Defaults to 1.0.
-
-    Returns:
-        _type_: _description_
-    """
-    kernel = _gen_kernel(kernel_size, kernel_stdev)
-    alignDat.convolve_rawends(kernel)
-
-    # - strand riboswitches are reverse complemented during the reference
-    # generation, so the right end in the reference is still the 3' end
-    switch_end = alignDat.switch_end
-    switch_size = alignDat.switch_end - alignDat.switch_start
-
-    # Set relevant regions to compare candidates within ± switch size
-    # proportion outside the switch
-    relevant_l = alignDat.switch_start - int(switch_size * left_margin)
-    relevant_r = alignDat.switch_end + int(switch_size * right_margin)
-
-    peaks = _find_peaks(alignDat.convends, switch_end, relevant_l, relevant_r)
-
-    # Sort peaks in order of increasing absolute distance from riboswitch end
-    close_peaks = sorted(peaks, key=operator.attrgetter("abs_from_switch_end"))
-
-    # Record how coverage is changed by identified peaks in the region of interest
-    cov_delta = _coverage_delta_per_peak(close_peaks, alignDat.summedcov)
-
-    toRet: list[Candidate] = []
-    for i, cand in enumerate(close_peaks):
-        try:
-            pval, nocand_cov_delta = peak_significance(cov_delta, i)
-        except ValueError:  # Haven't yet figured out why multivariate fails
-            pval, nocand_cov_delta = 1, [None]
-            print()
-        if pval <= 0.05:
-            cand_obj = Candidate(cand, switch_size, nocand_cov_delta, pval, alignDat)
-            toRet.append(cand_obj)
-
-        else:
-            continue
-
-    return toRet
 
 
 def get_peaks(

@@ -11,7 +11,7 @@ from tart.utils.read_parsing import AlignDat, SegregatedAlignDat
 from tart.utils.mpi_context import BasicMPIContext
 from tart.utils.activity_inference import Candidate
 from tart.utils.filter_functions import DefaultThresholds as checker
-from tart.utils.activity_inference import has_candidate_peak, get_peaks
+from tart.utils.activity_inference import get_peaks
 
 
 def _log_cand_charac(peaklog: dict, cand: Candidate):
@@ -20,7 +20,7 @@ def _log_cand_charac(peaklog: dict, cand: Candidate):
     peaklog["peak_summit"] = cand.summit
     peaklog["peak_width"] = cand.width
     # peaklog["peak_l/r"] = (cand.left, cand.right)
-    peaklog["coverage_delta_relative"] = cand.rel_cov_delta
+    # peaklog["coverage_delta_relative"] = cand.rel_cov_delta
 
     try:
         peaklog["coverage_delta_stable_relative"] = cand.stable_rel_cov_delta
@@ -187,8 +187,8 @@ def exec_main(
     statplot,
 ):
     if run_depr:
-        depr_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot)
-        # raise ValueError("No deprecated function to run")
+        # depr_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot)
+        raise ValueError("No deprecated function to run")
 
     else:
         main(
@@ -341,124 +341,4 @@ def main(
 def depr_main(
     pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot
 ):
-    # Determine MPI context
-    mp_con = BasicMPIContext()
-    comm = mp_con.comm
-    rank = mp_con.rank
-
-    # List of all pickled alignment data
-    if rank == 0:
-        try:
-            with tarfile.open(pick_root, "r:gz") as picktar:
-                total_files = [x.name for x in picktar.getmembers() if x.isfile()]
-        except FileNotFoundError:
-            print(f"Pickled data root {pick_root} not found.")
-            total_files = None
-
-    else:
-        total_files = None
-
-    total_files = comm.bcast(total_files, root=0)
-
-    # Pickle root was not found
-    if total_files is None:
-        raise SystemExit(0)
-
-    mp_con.set_full_list(total_files)
-    worker_list: list[str] = mp_con.generate_worker_list()
-
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    # Keep track of characteristics for each alignment
-    charac_local = []
-
-    # First pass; find suitable candidates if present
-    for pick_file in worker_list:
-        # Load in the alignment data object from the archive
-        with tarfile.open(pick_root, "r:gz") as picktar:
-            try:
-                with picktar.extractfile(pick_file) as f:  # type: ignore
-                    segmented: SegregatedAlignDat = pickle.load(f)
-                    alignDat: AlignDat = segmented.total
-            except KeyError:
-                print(
-                    f"{pick_file} not found in archive {pick_root} on worker rank {rank}"
-                )
-                continue
-
-        switch_size = alignDat.switch_end - alignDat.switch_start
-
-        # Save path formation and sample/ref IDs
-        ref = Path(pick_file[:-2]).name
-        targetname = Path(pick_file).parts[-3]
-
-        transcriptome = Path(pick_file).parts[-2]
-
-        # Reset to confirm no carry-over between alignments ---------------
-        align_charac = {}
-        align_charac["rowid"] = ref
-        align_charac["transcriptome"] = str(transcriptome)
-
-        # Check whether there are enough reads to proceed.
-        # This needs to be done to avoid clutter in the results
-        # that failed the filter
-        max_cov = max(alignDat.readcov[alignDat.switch_start : alignDat.switch_end])
-        if max_cov < min_cov_depth:
-            align_charac["decision_note"] = (
-                f"Minimum coverage not reached ({max_cov}<{min_cov_depth})"
-            )
-            charac_local.append(align_charac)
-            continue
-
-        lmarg, rmarg = ext_prop
-        candlist: list[Candidate] = has_candidate_peak(
-            alignDat, left_margin=lmarg, right_margin=rmarg
-        )
-
-        passfaildir = _process_candidate_list(
-            candlist, align_charac, charac_local, ref, transcriptome
-        )
-
-        # main plot path
-        save_path = out_dir.joinpath(passfaildir, f"{ref}#{transcriptome}.png")
-        save_path.parent.mkdir(exist_ok=True, parents=True)
-
-        # stat plot path
-        stat_path = out_dir.joinpath(passfaildir, f"{ref}#{transcriptome}_stats.png")
-
-        # Calculate and set info for binned raw ends
-        segmented.bin_rawends(bin_size=bin_size)
-
-        # We still want to see a large region around the switch in the plots
-        lplot = 1.0 if lmarg < 1.0 else lmarg
-        rplot = 1.0 if rmarg < 1.0 else rmarg
-
-        lbuff = int(switch_size * lplot)
-        rbuff = int(switch_size * rplot)
-        end_buffers = [lbuff, rbuff]
-
-        pObj = CoveragePlot(segmented, end_buffers)
-        if conv:
-            pObj._with_conv(save_path)
-
-        else:
-            pObj.default(save_path)
-
-        if statplot:
-            pObj.distribution_plots(stat_path)
-
-    charac_local_arr = comm.gather(charac_local, root=0)
-
-    if rank == 0:
-        if charac_local_arr is None:
-            raise TypeError("Gather failed")
-        characteristics = []
-        for instance_arr in charac_local_arr:
-            characteristics.extend(instance_arr)
-
-        # Make dataframe
-        # df = pd.DataFrame({"target_name": classes, "pass_rate": rates})
-        # df.to_csv(f"{out_dir}/pass_rates.csv", index=False)
-        df = pd.DataFrame(characteristics)
-        df.to_csv(f"{out_dir}/characteristics.csv", index=False)
+    pass

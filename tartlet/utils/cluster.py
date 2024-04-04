@@ -156,11 +156,11 @@ class Cluster:
         exshuff = list(exset)
 
         # shuffle then subset to emulate in-place sampling-without-replacement
-        for _ in range(5):
+        for _ in range(1):
             exshuff = sample(exshuff, exsize)
 
         # Collect at least rep comparisons to get a distribution of pvals
-        rep = 100
+        rep = 30
         ex_collection = []
         for _ in range((rep // (exsize // n + adj)) + 1):
             ex_collection.extend(
@@ -168,8 +168,8 @@ class Cluster:
             )
 
         # Levene's test on CUT against every sampled exset subset
-        plist = np.array(
-            map(lambda ex: levene(cut, ex, center="median").pvalue, ex_collection)
+        plist = np.array(  # have to list first otherwise np doesn't like it
+            list(map(lambda ex: levene(cut, ex, center="median").pvalue, ex_collection))
         )
 
         return np.percentile(plist, 50)

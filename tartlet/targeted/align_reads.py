@@ -40,19 +40,20 @@ def main(ref_dir, m1, m2, out_dir, readpair_name, hisat2):
         readpair_name = Path(m1).name.split(".")[0]
 
     for fasta in refs:
-        idx_dir = f"{fasta[:-4]}_index"
-        rswtch_class = Path(fasta).name[:-4]
+        fasta = Path(fasta)
+        idx_dir = fasta.parent.joinpath(f"{fasta.stem}_index")
+        # rswtch_class = Path(fasta).name[:-4]
 
-        samout_dir = f"{out_dir}/{rswtch_class}"
-        Path(samout_dir).mkdir(parents=True, exist_ok=True)
+        # samout_dir = f"{out_dir}"
+        Path(out_dir).mkdir(parents=True, exist_ok=True)
 
-        samout_path = f"{samout_dir}/{readpair_name}.sam"
+        samout_path = f"{out_dir}/{readpair_name}.sam"
 
         call = run(
             [
                 "hisat2",
                 "-x",
-                f"{idx_dir}/{rswtch_class}_index",
+                f"{idx_dir}",
                 "-1",
                 m1,
                 "-2",

@@ -31,8 +31,9 @@ def main(ref_dir, threads):
     print("-------------------------------------------------\n")
 
     for fasta in arr:
-        fasta_name = Path(fasta).name[:-4]
-        index_dir = f"{fasta[:-4]}_index"
+        fasta = Path(fasta)
+        fasta_name = fasta.stem
+        index_dir = fasta.parent.joinpath(f"{fasta.stem}_index")
 
         Path(index_dir).mkdir(exist_ok=True, parents=True)
 

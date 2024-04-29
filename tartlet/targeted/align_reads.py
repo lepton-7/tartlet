@@ -34,34 +34,36 @@ from tart.utils.utils import print
 def main(ref_dir, m1, m2, out_dir, readpair_name, hisat2):
     """Pass options to the HISAT2 invocation."""
     refs = glob(f"{ref_dir}/*.fna")
-
+    out_dir = Path(out_dir)
     if readpair_name is None:
         # Get the name of the first mate file without extension
         readpair_name = Path(m1).name.split(".")[0]
 
     for fasta in refs:
         fasta = Path(fasta)
-        idx_dir = fasta.parent.joinpath(f"{fasta.stem}_index")
+        idx_dir = fasta.parent.joinpath(f"{fasta.stem}_index/{fasta.stem}_index")
         # rswtch_class = Path(fasta).name[:-4]
 
-        # samout_dir = f"{out_dir}"
-        Path(out_dir).mkdir(parents=True, exist_ok=True)
+        samout_dir = out_dir.joinpath(f"{fasta.stem}")
+        samout_dir.mkdir(parents=True, exist_ok=True)
 
-        samout_path = f"{out_dir}/{readpair_name}.sam"
+        samout_path = f"{samout_dir}/{readpair_name}.sam"
+        cmd = [
+            "hisat2",
+            "-x",
+            f"{idx_dir}",
+            "-1",
+            m1,
+            "-2",
+            m2,
+            "-S",
+            samout_path,
+            *hisat2,  # options fed through from function call
+        ]
 
+        print(f"Running {cmd}")
         call = run(
-            [
-                "hisat2",
-                "-x",
-                f"{idx_dir}",
-                "-1",
-                m1,
-                "-2",
-                m2,
-                "-S",
-                samout_path,
-                *hisat2,  # options fed through from function call
-            ],
+            cmd,
             capture_output=True,
         )
         print(

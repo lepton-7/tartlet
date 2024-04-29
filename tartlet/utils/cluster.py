@@ -119,7 +119,7 @@ class Cluster:
             # Test against null -> peakset delta variance is ~= exset delta variance
             try:
                 varp = self.__var_test(peakset[self.statdim], exset[self.statdim])
-            except ValueError:
+            except:
                 varp = 1.0
 
             pos_mean_arr.append(np.mean(peakset[self.posdim]))

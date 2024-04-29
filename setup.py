@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="bio-tart",
-    version="0.7.3",
+    version="0.7.4",
     author="Sachit Kshatriya",
     author_email="sxk1464@case.edu",
     license="MIT",

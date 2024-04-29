@@ -141,8 +141,9 @@ class Peak:
             int: Absolute change in summed coverage across the peak.
         """
 
-        # Bounds are already validated when determined
-        return sumcov[self.right] - sumcov[self.left]
+        # Bounds are already validated when determined.
+        # Subtract one from self.right because it is exclusive bound.
+        return sumcov[self.right - 1] - sumcov[self.left]
 
     def find_stable_relative_coverage_delta(
         self, sumcov: npt.NDArray[np.float64], avg_coverage: float

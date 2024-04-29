@@ -232,6 +232,10 @@ def main(
     mp_con.set_full_list(total_files)
     worker_list: list[str] = mp_con.generate_worker_list()
 
+    if rank == 0:
+        print(f"Started {mp_con.size} instances.")
+        print(f"Each instance running upto {len(worker_list)} iterations.")
+
     # Keep track of peak log for each alignment
     peak_log_local: list[dict] = []
 
@@ -314,9 +318,12 @@ def main(
         if statplot and not noplots:
             pObj.distribution_plots(stat_path)
 
+    if rank == 0:
+        print("Waiting on all instances to start gather.")
     peak_log_arr = comm.gather(peak_log_local, root=0)
 
     if rank == 0:
+        print("Completed gather.")
         if peak_log_arr is None:
             raise TypeError("Gather failed")
         log: list[dict] = []

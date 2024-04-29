@@ -83,7 +83,7 @@ class Peak:
         while checkRight:
             ir += 1
             # Outside array bounds
-            if il >= len(source_arr):
+            if ir >= len(source_arr):
                 break
             # Monotonic
             checkRight = abs(source_arr[ir]) < abs(source_arr[ir - 1])

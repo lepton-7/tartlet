@@ -128,7 +128,7 @@ class CoveragePlot:
         ax.set_facecolor(self.palette["axback"])
         ax.set_title(f"Inferred fragment ends ({self._dat.bin_size}nt bins)")
         ax.set_xticks(self.xticks)
-        ax.set_xlabel("Nucleotide position (bp)")
+        ax.set_xlabel("Nucleotide position (bp)", fontsize="x-large")
 
         ax.set_ylabel("Count")
 
@@ -157,7 +157,7 @@ class CoveragePlot:
         # ax.set_facecolor(self.palette["axback"])
         ax.set_title(f"Convolved inferred fragment ends)")
         ax.set_xticks(self.xticks)
-        ax.set_xlabel("Nucleotide position (bp)")
+        ax.set_xlabel("Nucleotide position (bp)", fontsize="x-large")
 
         # The y axis doesn't really mean anything?
         # ax.set_ylabel("Count")
@@ -255,7 +255,7 @@ class CoveragePlot:
 
         ax.set_facecolor(self.palette["axback"])
         ax.set_title("Fragment coverage")
-        ax.legend(loc="upper right")
+        ax.legend(loc="upper left")
         ax.set_ylabel("Count")
 
     def default_depr(self, save_path: str | Path):
@@ -400,7 +400,7 @@ class CoveragePlot:
 
         ax3p.set_facecolor(self.palette["axback"])
         ax3p.set_title("Fragment coverage")
-        ax3p.legend(loc="upper right")
+        ax3p.legend(loc="upper left")
         ax3p.set_ylabel("Count")
 
         bottomno3p = np.zeros(len(self.x))
@@ -420,7 +420,7 @@ class CoveragePlot:
 
         axnot3p.set_facecolor(self.palette["axback"])
         axnot3p.set_title("Fragment coverage")
-        axnot3p.legend(loc="upper right")
+        axnot3p.legend(loc="upper left")
         axnot3p.set_ylabel("Count")
 
     def set_palette(self, palette):

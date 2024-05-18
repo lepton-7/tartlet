@@ -112,6 +112,8 @@ class CoveragePlot:
             else self.xticks[self.buffstart // 10 : ceil(self.buffend / 10)]
         )
 
+        self.axis_label_args = {"fontsize": "x-large"}
+
     def _binned_ends_panel(self, ax: Axes):
         """Add the binned raw ends panel to the figure.
 
@@ -128,9 +130,9 @@ class CoveragePlot:
         ax.set_facecolor(self.palette["axback"])
         ax.set_title(f"Inferred fragment ends ({self._dat.bin_size}nt bins)")
         ax.set_xticks(self.xticks)
-        ax.set_xlabel("Nucleotide position (bp)", fontsize="x-large")
+        ax.set_xlabel("Nucleotide position (bp)", self.axis_label_args)
 
-        ax.set_ylabel("Count")
+        ax.set_ylabel("Count", self.axis_label_args)
 
         self._add_switch_arrows(ax)
         self._add_boxes(ax)
@@ -157,7 +159,7 @@ class CoveragePlot:
         # ax.set_facecolor(self.palette["axback"])
         ax.set_title(f"Convolved inferred fragment ends)")
         ax.set_xticks(self.xticks)
-        ax.set_xlabel("Nucleotide position (bp)", fontsize="x-large")
+        ax.set_xlabel("Nucleotide position (bp)", self.axis_label_args)
 
         # The y axis doesn't really mean anything?
         # ax.set_ylabel("Count")
@@ -256,7 +258,7 @@ class CoveragePlot:
         ax.set_facecolor(self.palette["axback"])
         ax.set_title("Fragment coverage")
         ax.legend(loc="upper left")
-        ax.set_ylabel("Count")
+        ax.set_ylabel("Count", self.axis_label_args)
 
     def default_depr(self, save_path: str | Path):
         """Generate the default reference alignment plot and save to file.
@@ -282,7 +284,7 @@ class CoveragePlot:
 
         plt.close()
 
-    def default(self, save_path: str | Path):
+    def default(self, save_path: str | Path, with_conv=False):
         # TODO: docstring; Implement this properly
         fig, ax = plt.subplots(
             4,
@@ -297,7 +299,7 @@ class CoveragePlot:
 
         self._coverage_panel(ax[2])
         self._split_coverage_panels(ax[0], ax[1])
-        self._binned_ends_panel(ax[-1])
+        self._conv_ends_panel(ax[-1]) if with_conv else self._binned_ends_panel(ax[-1])
 
         fig.savefig(f"{save_path}")
 
@@ -340,32 +342,6 @@ class CoveragePlot:
 
         ax.set_xlim((0, 1000))
 
-    def _with_conv(self, save_path: str | Path):
-        """Generate the reference alignment plot with the fragment end
-        convolution panel and save to file.
-
-        Args:
-            save_path (str): Save path. Parent directories must exist.
-        """
-        fig, ax = plt.subplots(
-            4,
-            1,
-            sharex=True,
-            figsize=(20, 10),
-            dpi=100,
-            constrained_layout=True,
-            facecolor=self.palette["figback"],
-        )
-        fig.suptitle(f"{self._dat.ref}")
-
-        self._coverage_panel(ax[2])
-        self._split_coverage_panels(ax[0], ax[1])
-        self._conv_ends_panel(ax[-1])
-
-        fig.savefig(f"{save_path}")
-
-        plt.close()
-
     def _split_coverage_panels(self, ax3p: Axes, axnot3p: Axes):
         counts3p = {
             "Inferred": self._segregated.of_3prime.infercov,
@@ -401,7 +377,7 @@ class CoveragePlot:
         ax3p.set_facecolor(self.palette["axback"])
         ax3p.set_title("Fragment coverage")
         ax3p.legend(loc="upper left")
-        ax3p.set_ylabel("Count")
+        ax3p.set_ylabel("Count", self.axis_label_args)
 
         bottomno3p = np.zeros(len(self.x))
 
@@ -421,7 +397,7 @@ class CoveragePlot:
         axnot3p.set_facecolor(self.palette["axback"])
         axnot3p.set_title("Fragment coverage")
         axnot3p.legend(loc="upper left")
-        axnot3p.set_ylabel("Count")
+        axnot3p.set_ylabel("Count", self.axis_label_args)
 
     def set_palette(self, palette):
         self.palette = self.palette_picker[palette]

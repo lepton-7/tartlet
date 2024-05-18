@@ -113,6 +113,7 @@ class CoveragePlot:
         )
 
         self.axis_label_args = {"fontsize": "x-large"}
+        self.axis_label_coverage = "Mapped bases"
 
     def _binned_ends_panel(self, ax: Axes):
         """Add the binned raw ends panel to the figure.
@@ -132,7 +133,7 @@ class CoveragePlot:
         ax.set_xticks(self.xticks)
         ax.set_xlabel("Nucleotide position (bp)", self.axis_label_args)
 
-        ax.set_ylabel("Count", self.axis_label_args)
+        ax.set_ylabel(self.axis_label_coverage, self.axis_label_args)
 
         self._add_switch_arrows(ax)
         self._add_boxes(ax)
@@ -258,7 +259,7 @@ class CoveragePlot:
         ax.set_facecolor(self.palette["axback"])
         ax.set_title("Fragment coverage")
         ax.legend(loc="upper left")
-        ax.set_ylabel("Count", self.axis_label_args)
+        ax.set_ylabel(self.axis_label_coverage, self.axis_label_args)
 
     def default_depr(self, save_path: str | Path):
         """Generate the default reference alignment plot and save to file.
@@ -377,7 +378,7 @@ class CoveragePlot:
         ax3p.set_facecolor(self.palette["axback"])
         ax3p.set_title("Fragment coverage")
         ax3p.legend(loc="upper left")
-        ax3p.set_ylabel("Count", self.axis_label_args)
+        ax3p.set_ylabel(self.axis_label_coverage, self.axis_label_args)
 
         bottomno3p = np.zeros(len(self.x))
 
@@ -397,7 +398,7 @@ class CoveragePlot:
         axnot3p.set_facecolor(self.palette["axback"])
         axnot3p.set_title("Fragment coverage")
         axnot3p.legend(loc="upper left")
-        axnot3p.set_ylabel("Count", self.axis_label_args)
+        axnot3p.set_ylabel(self.axis_label_coverage, self.axis_label_args)
 
     def set_palette(self, palette):
         self.palette = self.palette_picker[palette]

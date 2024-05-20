@@ -309,11 +309,8 @@ def main(
         end_buffers = [lbuff, rbuff]
 
         pObj = CoveragePlot(segmented, end_buffers)
-        if conv and not noplots:
-            pObj._with_conv(save_path)
-
-        elif not noplots:
-            pObj.default(save_path)
+        if not noplots:
+            pObj.default(save_path, with_conv=conv)
 
         if statplot and not noplots:
             pObj.distribution_plots(stat_path)

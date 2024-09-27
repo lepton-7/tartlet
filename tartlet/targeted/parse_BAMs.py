@@ -94,6 +94,9 @@ def main(
                 CoveragePlot(alignDat, [40, 40]).default(save_path)
 
             if outPickles and alignDat.is_coverage_threshold("read", min_coverage):
+                click.echo(
+                    f"Mapped in switch = {alignDat.mapped_in_switch} ; Unmapped in switch = {alignDat.unmapped_in_switch}"
+                )
                 save_path = save_dir.joinpath(f"{alignDat.ref}.p")
                 with open(save_path, "wb") as f:
                     pickle.dump(alignDat, f)

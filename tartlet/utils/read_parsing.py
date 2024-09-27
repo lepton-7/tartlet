@@ -292,6 +292,9 @@ class AlignDat:
         self.clipcov: npt.NDArray[np.float64]
         self.terminalcov: npt.NDArray[np.float64]
 
+        self.mapped_in_switch: int
+        self.unmapped_in_switch: int
+
         # This is for easy future splitting of coverage types
         for covtype in self.__coverage_types:
             self.__setattr__(covtype, np.zeros(reflength))
@@ -341,6 +344,22 @@ class AlignDat:
             self.orf_start = int(self.ref_bounds[1] - self.orf_bounds[0])
             self.orf_end = int(self.ref_bounds[1] - self.orf_bounds[1])
 
+    def _intersect_switch(self, readstart: int, readend: int) -> bool:
+        """Check whether the mapped portion of a read intersects with the riboswitch region.
+
+        Args:
+            readstart (int): Start index for the read.
+            readend (int): End index for the read.
+
+        Returns:
+            bool: True if any part of the read intersects with the riboswitch.
+        """
+        return (
+            (readstart >= self.switch_start and readstart <= self.switch_end)
+            or (readend >= self.switch_start and readend <= self.switch_end)
+            or (readstart <= self.switch_start and readend >= self.switch_end)
+        )
+
     def _coalesce_into_cov(self, pair: ReadPair, allowSoftClips):
         """Extracts fragment coverage information from a ReadPair object.
 
@@ -360,6 +379,9 @@ class AlignDat:
 
             fstart = read.block_loci[0][0]
             rend = read.block_loci[-1][1]
+
+            if self._intersect_switch(fstart, rend):
+                self.unmapped_in_switch += 1
 
             if pair.orientation == "F":
                 read_regions.append((fstart + 1, rend))
@@ -403,6 +425,11 @@ class AlignDat:
 
             rstart = revread.block_loci[0][0]
             rend = revread.block_loci[-1][1]
+
+            if self._intersect_switch(fstart, fend) or self._intersect_switch(
+                rstart, rend
+            ):
+                self.mapped_in_switch += 1
 
             # The regions actually covered by the reads, but we dont want to double count
             # bases that have overlapping reads of the same pair. These are processed separately.

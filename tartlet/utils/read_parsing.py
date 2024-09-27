@@ -292,8 +292,8 @@ class AlignDat:
         self.clipcov: npt.NDArray[np.float64]
         self.terminalcov: npt.NDArray[np.float64]
 
-        self.mapped_in_switch: int
-        self.unmapped_in_switch: int
+        self.mapped_in_switch: int = 0
+        self.unmapped_in_switch: int = 0
 
         # This is for easy future splitting of coverage types
         for covtype in self.__coverage_types:

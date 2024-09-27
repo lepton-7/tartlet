@@ -95,7 +95,7 @@ def main(
 
             if outPickles and alignDat.is_coverage_threshold("read", min_coverage):
                 click.echo(
-                    f"Mapped in switch = {alignDat.mapped_in_switch} ; Unmapped in switch = {alignDat.unmapped_in_switch}"
+                    f"Mapped in switch = {alignDat.total.mapped_in_switch} ; Unmapped in switch = {alignDat.total.unmapped_in_switch}"
                 )
                 save_path = save_dir.joinpath(f"{alignDat.ref}.p")
                 with open(save_path, "wb") as f:

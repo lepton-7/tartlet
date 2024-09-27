@@ -1,1 +1,1 @@
-include tart/utils/data/rfam_*.clanin tart/utils/data/riboswitches_*.cm*
+include tartlet/utils/data/rfam_*.clanin tartlet/utils/data/riboswitches_*.cm*

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from random import sample
-from tart.utils.utils import print
+from tartlet.utils.utils import print
 from scipy.stats import mannwhitneyu, levene
 from scipy.cluster.hierarchy import fclusterdata
 

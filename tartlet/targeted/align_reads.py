@@ -3,7 +3,7 @@ import click
 from glob import glob
 from pathlib import Path
 from subprocess import run, PIPE
-from tart.utils.utils import print
+from tartlet.utils.utils import print
 
 
 @click.command(context_settings={"ignore_unknown_options": True})

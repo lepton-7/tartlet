@@ -3,7 +3,7 @@ import numpy as np
 import numpy.typing as npt
 
 from typing import Optional
-from tart.utils.read_parsing import AlignDat
+from tartlet.utils.read_parsing import AlignDat
 from scipy.stats import norm, ks_2samp, multivariate_normal
 
 

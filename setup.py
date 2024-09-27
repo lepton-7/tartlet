@@ -7,7 +7,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = fh.read()
 
 setup(
-    name="bio-tart",
+    name="tartlet",
     version="0.7.6",
     author="Sachit Kshatriya",
     author_email="sxk1464@case.edu",
@@ -15,7 +15,7 @@ setup(
     description="Trace riboswitches modulating transcription-termination.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/lepton-7/tart",
+    url="https://github.com/lepton-7/tartlet",
     py_modules=[],
     packages=find_packages(),
     include_package_data=True,
@@ -27,8 +27,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "tart-targeted = tart.entry_points:targeted",
-            "tart-utils = tart.entry_points:utils",
+            "tart-targeted = tartlet.entry_points:targeted",
+            "tart-utils = tartlet.entry_points:utils",
         ],
     },
 )

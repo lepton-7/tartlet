@@ -5,9 +5,9 @@ import tarfile as tf
 from glob import glob
 from pathlib import Path
 from shutil import rmtree
-from tart.utils.plotting import CoveragePlot
-from tart.utils.read_parsing import SortedBAM
-from tart.utils.mpi_context import BasicMPIContext
+from tartlet.utils.plotting import CoveragePlot
+from tartlet.utils.read_parsing import SortedBAM
+from tartlet.utils.mpi_context import BasicMPIContext
 
 
 @click.command()

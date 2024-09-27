@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 from math import ceil
 from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
-from tart.utils.read_parsing import AlignDat, SegregatedAlignDat
-from tart.utils.activity_inference import _gen_kernel
+from tartlet.utils.read_parsing import AlignDat, SegregatedAlignDat
+from tartlet.utils.activity_inference import _gen_kernel
 
 
 class CoveragePlot:

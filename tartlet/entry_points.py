@@ -1,6 +1,6 @@
 import click
 
-from tart.targeted import (
+from tartlet.targeted import (
     align_reads,
     filter_BAM_plots,
     make_BAMs,
@@ -10,7 +10,7 @@ from tart.targeted import (
     switch_loc_in_ref,
 )
 
-from tart.utils import (
+from tartlet.utils import (
     infernal,
     prodigal,
 )

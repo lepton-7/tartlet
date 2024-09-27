@@ -5,8 +5,8 @@ from glob import glob
 from pathlib import Path
 from typing import Optional
 from subprocess import run, PIPE
-from tart.utils.mpi_context import BasicMPIContext
-from tart.utils.utils import print, get_datapath_obj
+from tartlet.utils.mpi_context import BasicMPIContext
+from tartlet.utils.utils import print, get_datapath_obj
 
 current_ver = 14.9
 

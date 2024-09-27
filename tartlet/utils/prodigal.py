@@ -5,9 +5,9 @@ from glob import glob
 from pathlib import Path
 from Bio import SeqIO, SeqRecord
 from subprocess import run, PIPE
-from tart.utils.utils import print, rowid
+from tartlet.utils.utils import print, rowid
 from typing import Any, Generator, Literal, Optional
-from tart.utils.mpi_context import BasicMPIContext
+from tartlet.utils.mpi_context import BasicMPIContext
 
 
 class ORF:

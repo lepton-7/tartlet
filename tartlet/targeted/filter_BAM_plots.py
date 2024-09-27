@@ -5,13 +5,13 @@ import tarfile
 
 from glob import glob
 from pathlib import Path
-from tart.utils.cluster import Cluster
-from tart.utils.plotting import CoveragePlot
-from tart.utils.read_parsing import AlignDat, SegregatedAlignDat
-from tart.utils.mpi_context import BasicMPIContext
-from tart.utils.activity_inference import Candidate
-from tart.utils.filter_functions import DefaultThresholds as checker
-from tart.utils.activity_inference import get_peaks
+from tartlet.utils.cluster import Cluster
+from tartlet.utils.plotting import CoveragePlot
+from tartlet.utils.read_parsing import AlignDat, SegregatedAlignDat
+from tartlet.utils.mpi_context import BasicMPIContext
+from tartlet.utils.activity_inference import Candidate
+from tartlet.utils.filter_functions import DefaultThresholds as checker
+from tartlet.utils.activity_inference import get_peaks
 
 
 def _log_cand_charac(peaklog: dict, cand: Candidate):

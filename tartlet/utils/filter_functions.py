@@ -1,4 +1,4 @@
-from tart.utils.activity_inference import Candidate
+from tartlet.utils.activity_inference import Candidate
 
 
 class DefaultThresholds:

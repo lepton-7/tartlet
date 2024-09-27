@@ -49,7 +49,7 @@ from tart.utils.mpi_context import BasicMPIContext
 @click.option(
     "--allow-soft-clips",
     is_flag=True,
-    help="Consider the start/end of the soft clipped regions when determining where the likely fragment ends are from reads. If not set, only consider the aligned portions of the reads regardless of any soft clipped regions extending beyond.",
+    help="Reads that have one or more soft-clipped ends are thrown out unless this flag is set.",
 )
 def main(
     bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles, allow_soft_clips

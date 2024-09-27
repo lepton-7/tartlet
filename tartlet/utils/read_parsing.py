@@ -514,14 +514,17 @@ class AlignDat:
 
         Args:
             read (Read): Aligned read.
-            allowSoftClips (bool, optional): If true, considers the start/end of the soft clipped region when
-            determining where the likely fragment end is for this read. If set to False, only considers the
-            aligned portion of the read regardless of whether the soft clipped region extends beyond.
-            Defaults to True.
+            allowSoftClips (bool): If true, reads that have any soft-clipping
+            are processed. Soft-clipped reads are thrown out if set to False.
 
         Returns:
             bool: True if the read end was accounted for in the fragment ends list. False otherwise.
         """
+
+        # Throw out read if soft clips are not enabled
+        if not allowSoftClips and read.cigartally["S"] > 0:
+            return False
+
         # Do nothing with this read if the soft clip is at the critical
         # end of the read and soft clipped reads are not considered
         if read.orientation == "F" and not allowSoftClips and read.cigarlist[1] == "S":
@@ -850,10 +853,7 @@ class SortedBAM:
         """Generate alignment data for each reference found in the sorted BAM using all aligned reads/read pairs and return as a list.
 
         Args:
-            allowSoftClips (bool): If true, considers the start/end of the soft clipped region when
-            determining where the likely fragment end is for this read. If set to False, only considers the
-            aligned portion of the read regardless of whether the soft clipped region extends beyond.
-            Defaults to True.
+            allowSoftClips (bool): If true, reads with soft-clipping are processed. Soft-clipped reads are thrown out otherwise.
 
         Returns:
             list[AlignDat]: Alignment data for each reference.

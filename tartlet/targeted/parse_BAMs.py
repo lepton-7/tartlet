@@ -51,8 +51,13 @@ from tartlet.utils.mpi_context import BasicMPIContext
     is_flag=True,
     help="Reads that have one or more soft-clipped ends are thrown out unless this flag is set.",
 )
+@click.option(
+    "--allow-single-reads",
+    is_flag=True,
+    help="Reads with unmapped mates (single reads) are thrown out unless this flag is set.",
+)
 def main(
-    bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles, allow_soft_clips
+    bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles, allow_soft_clips, allow_single_reads
 ):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -592,17 +592,19 @@ class AlignDat:
         if r is not None:
             self.fragments[r].append(pair.fragment_termini)
 
-    def process_pairs(self, pairs: list[ReadPair], allowSoftClips: bool) -> "AlignDat":
+    def process_pairs(self, pairs: list[ReadPair], allowSoftClips: bool, allowSingleReads: bool = True) -> "AlignDat":
         """Process a list of ReadPair objects to extract alignment coverage and ends data.
 
         Args:
             pairs (list[ReadPair]): List of paired reads.
             allowSoftClips (bool): Consider soft clipped regions.
+            allowSingleReads (bool, default True): Consider unmapped reads.
 
         Returns:
             AlignDat: Same object after incorporating all ReadPair objects in pairs.
         """
         self.allowSoftClips = allowSoftClips
+        self.allowSingleReads = allowSingleReads
 
         # Filtered read pairs that span across any section of the riboswitch sequence
         self.tlen_in_switch: list[int] = []
@@ -615,6 +617,9 @@ class AlignDat:
                 continue
 
             elif pair.in_pair == 1:
+                if not self.allowSingleReads:
+                    continue
+
                 readIsProcessed = self._process_ends(pair.read, self.allowSoftClips)
                 if not readIsProcessed:
                     continue
@@ -721,7 +726,7 @@ class SegregatedAlignDat(AlignDat):
         self._set_refrelative_switch_bounds()
 
     def process_pairs(
-        self, pairs: list[ReadPair], allowSoftClips: bool
+        self, pairs: list[ReadPair], allowSoftClips: bool, allowSingleReads: bool
     ) -> "SegregatedAlignDat":
 
         #  FIX LATER HOLY SHIT
@@ -746,15 +751,15 @@ class SegregatedAlignDat(AlignDat):
 
         self.of_3prime = AlignDat(
             self.ref, self.ref_length, self.bounds_dict
-        ).process_pairs(_pairs_of3prime, allowSoftClips)
+        ).process_pairs(_pairs_of3prime, allowSoftClips, allowSingleReads)
 
         self.except_3prime = AlignDat(
             self.ref, self.ref_length, self.bounds_dict
-        ).process_pairs(_pairs_except3prime, allowSoftClips)
+        ).process_pairs(_pairs_except3prime, allowSoftClips, allowSingleReads)
 
         self.total = AlignDat(
             self.ref, self.ref_length, self.bounds_dict
-        ).process_pairs(pairs, allowSoftClips)
+        ).process_pairs(pairs, allowSoftClips, allowSingleReads)
 
         return self
 
@@ -848,12 +853,13 @@ class SortedBAM:
         return toRet
 
     def generate_ref_alignment_data(
-        self, allowSoftClips: bool
+        self, allowSoftClips: bool, allowSingleReads: bool
     ) -> list[SegregatedAlignDat]:
         """Generate alignment data for each reference found in the sorted BAM using all aligned reads/read pairs and return as a list.
 
         Args:
             allowSoftClips (bool): If true, reads with soft-clipping are processed. Soft-clipped reads are thrown out otherwise.
+            allowSingleReads (bool): If true, reads with unmapped mates are processed. Single reads with unmapped mates are thrown out otherwise.
 
         Returns:
             list[AlignDat]: Alignment data for each reference.
@@ -868,7 +874,7 @@ class SortedBAM:
 
             data.append(
                 SegregatedAlignDat(ref, reflength, boundDict).process_pairs(
-                    readpairs, allowSoftClips
+                    readpairs, allowSoftClips, allowSingleReads
                 )
             )
 

@@ -86,7 +86,7 @@ def main(
         # back to a Path. Don't @ me this works just fine.
         # save_dir = Path(str(out_dir.joinpath(*bam_split[-2:]))[:-11])
 
-        alignDat_arr = bam_wrap.generate_ref_alignment_data(allow_soft_clips)
+        alignDat_arr = bam_wrap.generate_ref_alignment_data(allow_soft_clips, allow_single_reads)
 
         for alignDat in alignDat_arr:
 

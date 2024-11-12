@@ -20,7 +20,7 @@ def get_datapath_obj() -> pathlib.Path:
     Returns:
         pathlib.Path: Data subdirectory
     """
-    utils = importlib_resources.files("tart.utils")
+    utils = importlib_resources.files("tartlet.utils")
     with importlib_resources.as_file(utils / "data") as path:
         return path
 

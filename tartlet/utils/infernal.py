@@ -185,8 +185,9 @@ def riboswitch_cmscan(
     "-o", "--out-dir", required=True, help="Output directory for cmscan output."
 )
 @click.option("--no-stats", is_flag=True, help="Supresses cmscan output to the console")
+@click.option("--is-list", is_flag=True, help="Argument is a path to a list")
 @click.argument("total_files", nargs=-1)
-def default_scan_for_riboswitches(out_dir, total_files: tuple | list, no_stats: bool):
+def default_scan_for_riboswitches(out_dir, total_files: tuple | list, no_stats: bool, is_list:bool):
     """Runs input files against the latest (14.9) rfam riboswitch covariance models.
 
     Supports MPI acceleration.
@@ -198,12 +199,19 @@ def default_scan_for_riboswitches(out_dir, total_files: tuple | list, no_stats: 
     """
     # MPI setup
 
-    # Test if arg passed is a directory
-    p = Path(total_files[0])
+    if is_list:
+        list_p = Path(total_files[0])
+        print(f"Reading genome paths from {list_p}")
+        with open(list_p, "r") as f:
+            total_files = [x.rstrip() for x in f]
 
-    if p.is_dir():
-        print(f"Argument passed is a directory; looking for .fna in {p}.")
-        total_files = glob(f"{p}/*.fna")
+        print(f"Loaded in {len(total_files)} genomes")
+    else:
+        # Test if arg passed is a directory
+        p = Path(total_files[0])
+        if p.is_dir():
+            print(f"Argument passed is a directory; looking for .fna in {p}.")
+            total_files = glob(f"{p}/*.fna")
 
     mp_con = BasicMPIContext([*total_files])
     worker_list = mp_con.generate_worker_list()

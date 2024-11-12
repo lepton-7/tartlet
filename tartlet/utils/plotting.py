@@ -81,6 +81,9 @@ class CoveragePlot:
         self.lbuff = end_buffers[0]
         self.rbuff = end_buffers[1]
 
+        # Gaps between the tick labels if bins are small
+        self.tick_sep = 20
+
         # x-axis array used in plots from the object
         self.x = [i for i in range(len(self._dat.readcov))]
         # Handle case where bin size is 1nt
@@ -101,19 +104,24 @@ class CoveragePlot:
         # Use reasonable x ticks
         self.xticks = (
             self._dat.bin_ax
-            if self._dat.bin_size >= 10
-            else [i for i in range(0, len(self._dat.readcov), 10)]
+            if self._dat.bin_size >= self.tick_sep
+            else [i for i in range(0, len(self._dat.readcov), self.tick_sep)]
         )
 
         # Set ticks that are in the plot frame
         self.xticks = (
             self.xticks[self.buffstart_bin : self.buffend_bin]
-            if self._dat.bin_size >= 10
-            else self.xticks[self.buffstart // 10 : ceil(self.buffend / 10)]
+            if self._dat.bin_size >= self.tick_sep
+            else self.xticks[
+                self.buffstart // self.tick_sep : ceil(self.buffend / self.tick_sep)
+            ]
         )
 
-        self.axis_label_args = {"fontsize": "x-large"}
+        self.axis_label_args = {"fontsize": "xx-large"}
         self.axis_label_coverage = "Mapped bases"
+
+        self.panel_title_size = 22
+        self.tick_lab_size = 16
 
     def _binned_ends_panel(self, ax: Axes):
         """Add the binned raw ends panel to the figure.
@@ -129,8 +137,13 @@ class CoveragePlot:
             align="edge",
         )
         ax.set_facecolor(self.palette["axback"])
-        ax.set_title(f"Inferred fragment ends ({self._dat.bin_size}nt bins)")
+        ax.set_title(
+            f"Inferred fragment ends ({self._dat.bin_size}nt bins)",
+            fontsize=self.panel_title_size,
+        )
         ax.set_xticks(self.xticks)
+        ax.xaxis.set_tick_params(labelsize=self.tick_lab_size)
+        ax.yaxis.set_tick_params(labelsize=self.tick_lab_size)
         ax.set_xlabel("Nucleotide position (bp)", self.axis_label_args)
 
         ax.set_ylabel(self.axis_label_coverage, self.axis_label_args)
@@ -158,8 +171,12 @@ class CoveragePlot:
             align="edge",
         )
         # ax.set_facecolor(self.palette["axback"])
-        ax.set_title(f"Convolved inferred fragment ends)")
+        ax.set_title(
+            f"Convolved inferred fragment ends", fontsize=self.panel_title_size
+        )
         ax.set_xticks(self.xticks)
+        ax.xaxis.set_tick_params(labelsize=self.tick_lab_size)
+        ax.yaxis.set_tick_params(labelsize=self.tick_lab_size)
         ax.set_xlabel("Nucleotide position (bp)", self.axis_label_args)
 
         # The y axis doesn't really mean anything?
@@ -257,9 +274,10 @@ class CoveragePlot:
             bottom += count
 
         ax.set_facecolor(self.palette["axback"])
-        ax.set_title("Fragment coverage")
+        ax.set_title("Fragment coverage", fontsize=self.panel_title_size)
         ax.legend(loc="upper left")
         ax.set_ylabel(self.axis_label_coverage, self.axis_label_args)
+        ax.yaxis.set_tick_params(labelsize=self.tick_lab_size)
 
     def default_depr(self, save_path: str | Path):
         """Generate the default reference alignment plot and save to file.
@@ -296,7 +314,7 @@ class CoveragePlot:
             constrained_layout=True,
             facecolor=self.palette["figback"],
         )
-        fig.suptitle(f"{self._dat.ref}")
+        fig.suptitle(f"{self._dat.ref}", fontsize=self.panel_title_size)
 
         self._coverage_panel(ax[2])
         self._split_coverage_panels(ax[0], ax[1])
@@ -376,9 +394,10 @@ class CoveragePlot:
             bottom3p += count
 
         ax3p.set_facecolor(self.palette["axback"])
-        ax3p.set_title("Fragment coverage")
+        ax3p.set_title("Fragment coverage", fontsize=self.panel_title_size)
         ax3p.legend(loc="upper left")
         ax3p.set_ylabel(self.axis_label_coverage, self.axis_label_args)
+        ax3p.yaxis.set_tick_params(labelsize=self.tick_lab_size)
 
         bottomno3p = np.zeros(len(self.x))
 
@@ -396,9 +415,10 @@ class CoveragePlot:
             bottomno3p += count
 
         axnot3p.set_facecolor(self.palette["axback"])
-        axnot3p.set_title("Fragment coverage")
+        axnot3p.set_title("Fragment coverage", fontsize=self.panel_title_size)
         axnot3p.legend(loc="upper left")
         axnot3p.set_ylabel(self.axis_label_coverage, self.axis_label_args)
+        axnot3p.yaxis.set_tick_params(labelsize=self.tick_lab_size)
 
     def set_palette(self, palette):
         self.palette = self.palette_picker[palette]

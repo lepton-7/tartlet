@@ -12,14 +12,14 @@ class Cluster:
         self,
         peak_log: pd.DataFrame,
         locus_column: str = "rowid",
-        feature_dimension_columns: list[str] = ["from_riboswith_end_relative"],
+        feature_dimension_columns: list[str] = ["from_riboswitch_end_relative"],
     ) -> None:
 
         self.rowid = locus_column
         self.feature_dims = feature_dimension_columns
 
         self.statdim = "coverage_delta_stable_relative"
-        self.posdim = "from_riboswith_end_relative"
+        self.posdim = "from_riboswitch_end_relative"
 
         self.df = self.__cluster(peak_log)
         self.stats_df = self.__compute_stats()

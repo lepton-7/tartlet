@@ -29,8 +29,8 @@ def _log_cand_charac(peaklog: dict, cand: Candidate):
 
     peaklog["coverage_delta_noiseset"] = str(cand.coverage_delta_noise)
 
-    peaklog["from_riboswith_end"] = cand.from_switch_end
-    peaklog["from_riboswith_end_relative"] = cand.from_switch_end_relative
+    peaklog["from_riboswitch_end"] = cand.from_switch_end
+    peaklog["from_riboswitch_end_relative"] = cand.from_switch_end_relative
 
     # peaklog["ks_stat"] = cand.symks_stat
     # peaklog["ks_p"] = cand.symks_pval

@@ -27,8 +27,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "tart-targeted = tartlet.entry_points:targeted",
-            "tart-utils = tartlet.entry_points:utils",
+            "tartlet-targeted = tartlet.entry_points:targeted",
+            "tartlet-utils = tartlet.entry_points:utils",
         ],
     },
 )

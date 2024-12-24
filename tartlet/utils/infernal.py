@@ -1,5 +1,6 @@
 import click
 import requests
+import pandas as pd
 
 from glob import glob
 from pathlib import Path
@@ -187,7 +188,9 @@ def riboswitch_cmscan(
 @click.option("--no-stats", is_flag=True, help="Supresses cmscan output to the console")
 @click.option("--is-list", is_flag=True, help="Argument is a path to a list")
 @click.argument("total_files", nargs=-1)
-def default_scan_for_riboswitches(out_dir, total_files: tuple | list, no_stats: bool, is_list:bool):
+def default_scan_for_riboswitches(
+    out_dir, total_files: tuple | list, no_stats: bool, is_list: bool
+):
     """Runs input files against the latest (14.9) rfam riboswitch covariance models.
 
     Supports MPI acceleration.
@@ -226,3 +229,102 @@ def default_scan_for_riboswitches(out_dir, total_files: tuple | list, no_stats: 
         riboswitch_cmscan(
             seq_file=fasta_path, out_dir=out_dir, rank=mp_con.rank, no_stats=no_stats
         )
+
+
+def __infernal_to_df(fpath: Path, name: str = None):
+    if name is None:
+        name = fpath.stem.split(".")[0]
+        print(f"Dataset name not provided for {fpath}, using {name}")
+
+    rows = []
+    # This is so that extra data that is not in the infernal table can be
+    # added to the row data and parsed at the same time
+    additionalCols = r" %s %s"
+
+    with open(fpath, "r") as f:
+        gen_acc = " "
+
+        # infernal puts the query file (which has its genome accession ID) at
+        # the end of the riboswitch tables, so the easy way to associate
+        # genome IDs with their riboswitches is to just reverse the results
+        # and append it to the results until the next table and a new genome ID is detected
+        for line in reversed(f.readlines()):
+            li = line.strip()
+
+            # ignore everything except the results rows and add taxonomy data
+            if not li.startswith("#"):
+                rows.append(line.rstrip() + additionalCols % (gen_acc, name))
+
+            # start of results from a new query genome
+            if li.startswith("# Query file:"):
+                # Extract the genome ID from the big query file path. Example:
+                # Query file: ~/Emerge_MAGs_v1/Derep95/20110600_P1M_23.fna
+                # first at every /, then take the last bit: 20110600_P1M_23.fna
+                # and slice it to remove the ".fna".
+                gen_acc = line.rstrip().split("/")[-1][:-4]
+
+    table = []
+
+    for row in rows:
+        # Taking the strings from the infernal output and putting them into
+        # a table to turn into a pd df.
+        row_contents = row.split()
+
+        # Because data in the "description of target" column has spaces,
+        # the split() commands puts each word as its own element
+        # into row_contents. To pull the relevant info out of the array,
+        # slice and include in a way that doesnt touch
+        # indices occupied by the description.
+        table.append(
+            [*row_contents[:16], *row_contents[-len(additionalCols.split(" ")) + 1 :]]
+        )
+
+    # Took most of this from the infernal results table header to pass onto the df
+    col_lab = [
+        "target_name",
+        "accession",
+        "query_name",
+        "accession",
+        "mdl",
+        "mdl_from",
+        "mdl_to",
+        "seq_from",
+        "seq_to",
+        "strand",
+        "trunc",
+        "pass",
+        "gc",
+        "bias",
+        "score",
+        "e-value",
+        "genome_accession",
+        "dataset",
+    ]
+
+    df = pd.DataFrame(
+        table,
+        columns=col_lab,
+    )
+
+    # I dont think these columns are informative.
+    df = df.drop(columns=["mdl_from", "mdl_to", "mdl"], axis="columns")
+
+    return df
+
+
+@click.command()
+@click.option("-i", "--in-dir", required=True, help="Infernal results directory path")
+@click.option("-o", "--out-path", required=True, help="Output .csv table path")
+def parse_results(in_dir, out_path):
+    in_dir = Path(in_dir)
+    if not in_dir.is_dir():
+        raise ValueError(f"Path {in_dir} is not a directory.")
+
+    in_list = in_dir.glob(f"{in_dir}/*.txt")
+
+    dfs = []
+    for fpath in in_list:
+        dfs.append(__infernal_to_df(fpath))
+
+    cumulative = pd.concat(dfs, ignore_index=True)
+    cumulative.to_csv(out_path, index=False)

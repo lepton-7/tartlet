@@ -1,12 +1,41 @@
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
+import rpy2.robjects as robjects
 
 from math import ceil
 from matplotlib.axes import Axes
+from rpy2.robjects import pandas2ri
 from matplotlib.patches import Rectangle
 from tartlet.utils.read_parsing import AlignDat, SegregatedAlignDat
 from tartlet.utils.activity_inference import _gen_kernel
+
+r = robjects.r
+r["source"]("peak_plotting.r")
+
+peakplotmaker_r = robjects.globalenv["peakplotmaker"]
+
+
+class PeakPlot:
+    """Handle plotting tool outputs"""
+
+    def __init__(
+        self,
+        plog_path: Path | str,
+        cstats_path: Path | str,
+        out_path: Path | str,
+        name: str,
+    ):
+
+        self.plog_path = Path(plog_path)
+        self.cstats_path = Path(cstats_path)
+        self.out_path = Path(out_path)
+        self.name = name
+
+        self._make_peak_plot()
+
+    def _make_peak_plot(self):
+        peakplotmaker_r(self.plog_path, self.cstats_path, self.out_path, self.name)
 
 
 class CoveragePlot:

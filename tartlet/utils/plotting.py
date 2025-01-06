@@ -4,16 +4,13 @@ import matplotlib.pyplot as plt
 import rpy2.robjects as robjects
 
 from math import ceil
+from os import getcwd
 from matplotlib.axes import Axes
 from rpy2.robjects import pandas2ri
+from tartlet.utils.utils import print
 from matplotlib.patches import Rectangle
 from tartlet.utils.read_parsing import AlignDat, SegregatedAlignDat
 from tartlet.utils.activity_inference import _gen_kernel
-
-r = robjects.r
-r["source"]("peak_plotting.r")
-
-peakplotmaker_r = robjects.globalenv["peakplotmaker"]
 
 
 class PeakPlot:
@@ -21,21 +18,31 @@ class PeakPlot:
 
     def __init__(
         self,
+        abs_path: Path | str,
         plog_path: Path | str,
         cstats_path: Path | str,
         out_path: Path | str,
         name: str,
     ):
+        r = robjects.r
+        r["source"](f"{Path(abs_path).parent}/peak_plotting.r")
+
+        self.peakplotmaker_r = robjects.globalenv["peakplotmaker"]
 
         self.plog_path = Path(plog_path)
         self.cstats_path = Path(cstats_path)
         self.out_path = Path(out_path)
         self.name = name
 
+        # FIXME: add input validation for paths and filetypes
+        self.out_path.parent.mkdir(parents=True, exist_ok=True)
+
         self._make_peak_plot()
 
     def _make_peak_plot(self):
-        peakplotmaker_r(self.plog_path, self.cstats_path, self.out_path, self.name)
+        self.peakplotmaker_r(
+            str(self.plog_path), str(self.cstats_path), str(self.out_path), self.name
+        )
 
 
 class CoveragePlot:

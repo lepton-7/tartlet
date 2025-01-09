@@ -143,7 +143,7 @@ def _process_candidate_list(
 )
 @click.option(
     "--min-cov-depth",
-    default=50,
+    default=15,
     show_default=True,
     help="Maximum read coverage (not inferred or clipped coverage) within the riboswitch region must be equal or greater than the specified threshold to proceed with pass/fail classification and include the alignment in the pass rate calculations.",
 )

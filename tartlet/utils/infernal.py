@@ -311,6 +311,7 @@ def __infernal_to_df(fpath: Path, name: str = None):
 
     return df
 
+from os import getcwd
 
 @click.command()
 @click.option("-i", "--in-dir", required=True, help="Infernal results directory path")
@@ -320,11 +321,16 @@ def parse_results(in_dir, out_path):
     if not in_dir.is_dir():
         raise ValueError(f"Path {in_dir} is not a directory.")
 
-    in_list = in_dir.glob(f"{in_dir}/*.txt")
+    in_list = in_dir.glob(f"*.txt")
+    print(f"Searched for files in: {in_dir}")
 
     dfs = []
     for fpath in in_list:
+        print(f"Processing {fpath}")
         dfs.append(__infernal_to_df(fpath))
+
+    if len(dfs) == 0:
+        raise ValueError(f"No results files parsed. Is the input correct: {in_dir}?")
 
     cumulative = pd.concat(dfs, ignore_index=True)
     cumulative.to_csv(out_path, index=False)

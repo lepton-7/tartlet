@@ -1,10 +1,11 @@
-library(tidyverse)
-library(ggplot2)
-library(reshape2)
-library(stringr)
-library(ggforce)
-library(patchwork)
-
+suppressPackageStartupMessages({
+    library(tidyverse)
+    library(ggplot2)
+    library(reshape2)
+    library(stringr)
+    library(ggforce)
+    library(patchwork)
+})
 
 def_theme <- theme_classic() +
     theme(

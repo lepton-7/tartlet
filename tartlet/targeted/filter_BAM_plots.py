@@ -175,6 +175,12 @@ def _process_candidate_list(
     is_flag=True,
     help="(Dev use) Output plot with stats.",
 )
+@click.option(
+    "--cophen-dist-thresh",
+    default=0.04,
+    show_default=True,
+    help="Optionally set the cophenetic distance threshold that is used when generating peaks into clusters.",
+)
 def exec_main(
     pick_root,
     out_dir,
@@ -185,6 +191,7 @@ def exec_main(
     noplots,
     conv,
     statplot,
+    cophen_dist_thresh,
 ):
     if run_depr:
         # depr_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot)
@@ -200,11 +207,20 @@ def exec_main(
             noplots,
             conv,
             statplot,
+            cophen_dist_thresh,
         )
 
 
 def main(
-    pick_root: str, out_dir, bin_size, min_cov_depth, ext_prop, noplots, conv, statplot
+    pick_root: str,
+    out_dir,
+    bin_size,
+    min_cov_depth,
+    ext_prop,
+    noplots,
+    conv,
+    statplot,
+    cophen_dist_thresh: float,
 ):
     # Determine MPI context ---------------------------------------------------
     mp_con = BasicMPIContext()
@@ -333,7 +349,7 @@ def main(
         # df.to_csv(f"{out_dir}/pass_rates.csv", index=False)
 
         # Cluster peaks for later plotting
-        peak_log, cluster_stats = Cluster(pd.DataFrame(log)).get()
+        peak_log, cluster_stats = Cluster(pd.DataFrame(log), cophen_dist_thresh).get()
 
         if len(peak_log) > 0:
             peak_log.to_csv(f"{out_dir}/peak_log.csv", index=False)

@@ -30,6 +30,10 @@ from tartlet.utils.utils import print
     required=True,
     help="Path and filename of the generated plot. Must have the '.png' suffix.",
 )
+def exec_main(peak_log, cluster_stats, name, output_path):
+    main(peak_log, cluster_stats, name, output_path)
+
+
 def main(peak_log, cluster_stats, name, output_path):
     plotting.PeakPlot(plotting.__file__, peak_log, cluster_stats, output_path, name)
     print(f"Saved peak plot for {name} to {output_path}")

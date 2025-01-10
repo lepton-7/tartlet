@@ -34,7 +34,7 @@ targeted.add_command(make_indexes.main, name="index")
 targeted.add_command(make_reference_sequences.main, name="reference-gen")
 targeted.add_command(switch_loc_in_ref.main, name="bounds")
 targeted.add_command(parse_BAMs.main, name="parse-bam")
-targeted.add_command(plot_results.main, name="plot")
+targeted.add_command(plot_results.exec_main, name="plot")
 
 utils.add_command(infernal.default_scan_for_riboswitches, name="find-riboswitches")
 utils.add_command(infernal.parse_results, name="make-table")

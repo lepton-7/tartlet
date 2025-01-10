@@ -11,12 +11,15 @@ class Cluster:
     def __init__(
         self,
         peak_log: pd.DataFrame,
+        cophen_d_thresh: float,
         locus_column: str = "rowid",
         feature_dimension_columns: list[str] = ["from_riboswitch_end_relative"],
     ) -> None:
 
         self.rowid = locus_column
         self.feature_dims = feature_dimension_columns
+
+        self.cophenetic_dist_thresh = cophen_d_thresh
 
         self.statdim = "coverage_delta_stable_relative"
         self.posdim = "from_riboswitch_end_relative"
@@ -176,6 +179,11 @@ class Cluster:
 
     def __default_cluster(self, X: np.ndarray):
         def wrapper():
-            return fclusterdata(X, t=0.04, criterion="distance", method="complete")
+            return fclusterdata(
+                X,
+                t=self.cophenetic_dist_thresh,
+                criterion="distance",
+                method="complete",
+            )
 
         return wrapper

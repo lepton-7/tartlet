@@ -46,6 +46,13 @@ class Cluster:
                 print(f"Skipping id: {rowid}.")
                 continue
 
+            # If there are no passing peaks that were found at this locus, do not pass this into clustering.
+            if "pass" not in pd.unique(tdf["decision"]):
+                print(
+                    f"Skip clustering for locus {rowid} due to no passing peaks across conditions."
+                )
+                continue
+
             # FIXME: Make this somehow compatible with arbitrary dims and col names
             relpos = np.array(tdf[self.posdim])
 

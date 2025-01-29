@@ -33,11 +33,13 @@ from tartlet.utils.utils import print
 @click.option(
     "--low-lim",
     default=-1.2,
+    show_default=True,
     help="Lower bound for the peak plot y-axes.",
 )
 @click.option(
     "--up-lim",
     default=0.5,
+    show_default=True,
     help="Upper bound for the peak plot y-axes.",
 )
 def exec_main(peak_log, cluster_stats, name, output_path, low_lim, up_lim):

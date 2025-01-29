@@ -40,7 +40,8 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name) {
     statdf$ann <- statdf$delta_mean < 0 &
         statdf$delta_mean_pval < 0.05 &
         statdf$delta_variance_pval < 0.05 &
-        statdf$delta_variance > statdf$noiseset_delta_variance
+        statdf$delta_variance > statdf$noiseset_delta_variance &
+        statdf$sig_peak_in_cluster == "True"
     statdf <- statdf[statdf$ann, ]
     if (nrow(statdf) > 0) statdf$ann_text <- "*"
 
@@ -51,7 +52,8 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name) {
         geom_line(aes(color = transcriptome)) +
         geom_point() +
         facet_wrap(~rowid, scales = "fixed") +
-        geom_mark_ellipse(aes(fill = as.factor(cluster)), expand = unit(0.5, "mm")) +
+        geom_mark_ellipse(aes(fill = as.factor(cluster), linetype = as.factor(sig_peak_in_cluster)),
+            expand = unit(0.5, "mm")) +
         labs(
             title = str_glue("{name} riboswitches across all available conditions"),
             y = "Fractional coverage change",
@@ -65,7 +67,7 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name) {
             strip.background = element_rect(fill = "#cdcdcd", linewidth = 0),
         ) +
         coord_cartesian(ylim = c(-1.2, 0.5)) +
-        guides(alpha = "none", color = "none")
+        guides(alpha = "none", color = "none", linetype = "none")
 
     if (nrow(statdf) > 0) {
         peakplot <- peakplot + geom_text(data = statdf, mapping = aes(x = pos_mean, y = 0.3, label = ann_text), size = 12, fontface = "bold")

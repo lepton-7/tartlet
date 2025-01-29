@@ -46,13 +46,6 @@ class Cluster:
                 print(f"Skipping id: {rowid}.")
                 continue
 
-            # If there are no passing peaks that were found at this locus, do not pass this into clustering.
-            if "pass" not in pd.unique(tdf["decision"]):
-                print(
-                    f"Skip clustering for locus {rowid} due to no passing peaks across conditions."
-                )
-                continue
-
             # FIXME: Make this somehow compatible with arbitrary dims and col names
             relpos = np.array(tdf[self.posdim])
 
@@ -101,6 +94,7 @@ class Cluster:
         delta_varp_arr = []
         exset_delta_mean_arr = []
         exset_delta_variance_arr = []
+        sig_peak_in_cluster_arr = []
 
         # Iterate over each rowid and cluster combination
         for i, row in df.iterrows():
@@ -112,6 +106,9 @@ class Cluster:
             peakset = self.df[
                 (self.df[self.rowid] == rowid) & (self.df["cluster"] == cl)
             ].dropna(subset=self.feature_dims)
+
+            # Determine if there is a locus-plot-passing peak in the cluster
+            sig_peak_in_cl = "pass" in list(pd.unique(peakset["decision"]))
 
             # Set of cluster exclusive peaks
             exset = self.df[
@@ -140,6 +137,7 @@ class Cluster:
             delta_varp_arr.append(varp)
             exset_delta_mean_arr.append(np.mean(exset[self.statdim]))
             exset_delta_variance_arr.append(np.var(exset[self.statdim]))
+            sig_peak_in_cluster_arr.append(str(sig_peak_in_cl))
 
         df["pos_mean"] = pos_mean_arr
         df["pos_variance"] = pos_var_arr
@@ -149,6 +147,7 @@ class Cluster:
         df["delta_variance"] = delta_var_arr
         df["noiseset_delta_variance"] = exset_delta_variance_arr
         df["delta_variance_pval"] = delta_varp_arr
+        df["sig_peak_in_cluster"] = sig_peak_in_cluster_arr
 
         return df
 

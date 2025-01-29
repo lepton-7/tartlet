@@ -23,6 +23,8 @@ class PeakPlot:
         cstats_path: Path | str,
         out_path: Path | str,
         name: str,
+        plot_lim_low: float,
+        plot_lim_high: float,
     ):
         r = robjects.r
         r["source"](f"{Path(abs_path).parent}/peak_plotting.r")
@@ -33,6 +35,8 @@ class PeakPlot:
         self.cstats_path = Path(cstats_path)
         self.out_path = Path(out_path)
         self.name = name
+        self.plot_lim_low = float(plot_lim_low)
+        self.plot_lim_high = float(plot_lim_high)
 
         # FIXME: add input validation for paths and filetypes
         self.out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -41,7 +45,12 @@ class PeakPlot:
 
     def _make_peak_plot(self):
         self.peakplotmaker_r(
-            str(self.plog_path), str(self.cstats_path), str(self.out_path), self.name
+            str(self.plog_path),
+            str(self.cstats_path),
+            str(self.out_path),
+            self.name,
+            self.plot_lim_low,
+            self.plot_lim_high,
         )
 
 

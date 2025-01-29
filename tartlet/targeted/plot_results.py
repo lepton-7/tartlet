@@ -30,12 +30,30 @@ from tartlet.utils.utils import print
     required=True,
     help="Path and filename of the generated plot. Must have the '.png' suffix.",
 )
-def exec_main(peak_log, cluster_stats, name, output_path):
-    main(peak_log, cluster_stats, name, output_path)
+@click.option(
+    "--low-lim",
+    default=-1.2,
+    help="Lower bound for the peak plot y-axes.",
+)
+@click.option(
+    "--up-lim",
+    default=0.5,
+    help="Upper bound for the peak plot y-axes.",
+)
+def exec_main(peak_log, cluster_stats, name, output_path, low_lim, up_lim):
+    main(peak_log, cluster_stats, name, output_path, low_lim, up_lim)
 
 
-def main(peak_log, cluster_stats, name, output_path):
-    plotting.PeakPlot(plotting.__file__, peak_log, cluster_stats, output_path, name)
+def main(peak_log, cluster_stats, name, output_path, low_lim, up_lim):
+    plotting.PeakPlot(
+        abs_path=plotting.__file__,
+        plog_path=peak_log,
+        cstats_path=cluster_stats,
+        out_path=output_path,
+        name=name,
+        plot_lim_low=low_lim,
+        plot_lim_high=up_lim,
+    )
     print(f"Saved peak plot for {name} to {output_path}")
 
 

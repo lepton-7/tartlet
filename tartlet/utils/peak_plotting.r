@@ -28,7 +28,7 @@ rowidlabeller <- function(variable) {
     return(tt)
 }
 
-peakplotmaker <- function(plog_path, cstats_path, out_path, name) {
+peakplotmaker <- function(plog_path, cstats_path, out_path, name, lowlim, uplim) {
     df <- read.csv(plog_path)
     statdf <- read.csv(cstats_path)
 
@@ -69,7 +69,7 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name) {
             strip.background = element_rect(fill = "#cdcdcd", linewidth = 0),
         ) +
         scale_linetype_manual(values = c("True" = "solid", "False" = "dotted")) +
-        coord_cartesian(ylim = c(-1.2, 0.5)) +
+        coord_cartesian(ylim = c(lowlim, uplim)) +
         guides(alpha = "none", color = "none", linetype = "none")
 
     if (nrow(statdf) > 0) {

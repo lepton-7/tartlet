@@ -169,7 +169,7 @@ class Cluster:
             exshuff = sample(exshuff, exsize)
 
         # Collect at least rep comparisons to get a distribution of pvals
-        rep = 30
+        rep = 60
         ex_collection = []
         for _ in range((rep // (exsize // n + adj)) + 1):
             ex_collection.extend(

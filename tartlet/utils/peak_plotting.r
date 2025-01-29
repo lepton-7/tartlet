@@ -34,6 +34,8 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name) {
 
     df <- df[df$decision != "", ]
 
+    df <- merge(df, statdf[, c("rowid", "cluster", "sig_peak_in_cluster")], by = c("rowid", "cluster"), all = FALSE)
+
     df$rowid <- sapply(df$rowid, rowidlabeller)
     statdf$rowid <- sapply(statdf$rowid, rowidlabeller)
 
@@ -66,6 +68,7 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name) {
             strip.text = element_text(size = 20),
             strip.background = element_rect(fill = "#cdcdcd", linewidth = 0),
         ) +
+        scale_linetype_manual(values = c("True" = "solid", "False" = "dotted")) +
         coord_cartesian(ylim = c(-1.2, 0.5)) +
         guides(alpha = "none", color = "none", linetype = "none")
 

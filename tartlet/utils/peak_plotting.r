@@ -80,5 +80,11 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name, lowlim, uplim)
 
     print(str_glue("Saving plot: {name}"))
     alph <- 0.7
-    ggsave(out_path, plot = peakplot, dpi = 320 * alph, units = "px", width = 7000 * alph, height = 4000 * alph)
+    if (file_ext(out_path) == "pdf"){
+        ggsave(out_path, plot = peakplot, dpi = 320 * alph, units = "px", width = 7000 * alph, height = 4000 * alph, device = cairo_pdf)
+    }
+    else {
+        ggsave(out_path, plot = peakplot, dpi = 320 * alph, units = "px", width = 7000 * alph, height = 4000 * alph)
+    }
+
 }

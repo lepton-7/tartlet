@@ -11,7 +11,10 @@ class DefaultThresholds:
         pass
 
     @staticmethod
-    def check(cand: Candidate):
+    def check(
+        cand: Candidate,
+        rel_cov_change_sig_thresh: float,
+    ):
         d = DefaultThresholds
         issues = []
         warns = []
@@ -25,9 +28,9 @@ class DefaultThresholds:
             issues.append(
                 f"Too far from end (abs({cand.from_switch_end_relative:.2f}) > {d.relative_size_bounds})"
             )
-        if cand.stable_rel_cov_delta > d.relative_cov_delta:
+        if cand.stable_rel_cov_delta > float(rel_cov_change_sig_thresh):
             issues.append(
-                f"Small drop ({cand.stable_rel_cov_delta:.2f} > {d.relative_cov_delta})"
+                f"Small drop ({cand.stable_rel_cov_delta:.2f} > {rel_cov_change_sig_thresh})"
             )
 
         # if cand.symks_pval > d.symmetric_peaks_pval:

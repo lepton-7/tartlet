@@ -37,9 +37,14 @@ def _log_cand_charac(peaklog: dict, cand: Candidate):
     peaklog["decision_note"] = cand.note
 
 
-def _process_peak(peak: Candidate, peaklog: dict, peaklog_loc: list):
+def _process_peak(
+    peak: Candidate,
+    peaklog: dict,
+    peaklog_loc: list,
+    rel_cov_change_sig_thresh: float,
+):
 
-    dec = checker.check(peak)
+    dec = checker.check(peak, rel_cov_change_sig_thresh)
     peaklog["decision"] = dec
 
     _log_cand_charac(peaklog, peak)
@@ -79,6 +84,7 @@ def _process_candidate_list(
     charac_local: list,
     ref: str,
     transcriptome: str,
+    rel_cov_change_sig_thresh: float,
 ):
     """DEPR
 
@@ -102,7 +108,7 @@ def _process_candidate_list(
         align_charac = {}
         align_charac["rowid"] = ref
         align_charac["transcriptome"] = str(transcriptome)
-        decision = checker.check(cand)
+        decision = checker.check(cand, rel_cov_change_sig_thresh)
         align_charac["decision"] = decision
 
         if decision == "pass":
@@ -114,7 +120,7 @@ def _process_candidate_list(
     align_charac = {}
     align_charac["rowid"] = ref
     align_charac["transcriptome"] = str(transcriptome)
-    decision = checker.check(candlist[0])
+    decision = checker.check(candlist[0], rel_cov_change_sig_thresh)
     align_charac["decision"] = decision
     _log_cand_charac(align_charac, candlist[0])
     charac_local.append(align_charac)
@@ -181,6 +187,14 @@ def _process_candidate_list(
     show_default=True,
     help="Optionally set the cophenetic distance threshold that is used when generating peaks into clusters.",
 )
+@click.option(
+    "--rel-cov-change-thresh",
+    default=-0.2,
+    show_default=True,
+    help="Optionally set the relative coverage change threshold that a peak must meet to 'pass' in addition to the MVN test. \
+        \
+        For example, a value of -0.1 implies a peak must have a relative coverage change across it <= -0.1 in addition to an MVN p-val < 0.05 for it to 'pass'.",
+)
 def exec_main(
     pick_root,
     out_dir,
@@ -192,6 +206,7 @@ def exec_main(
     conv,
     statplot,
     cophen_dist_thresh,
+    rel_cov_change_thresh,
 ):
     if run_depr:
         # depr_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot)
@@ -208,6 +223,7 @@ def exec_main(
             conv,
             statplot,
             cophen_dist_thresh,
+            rel_cov_change_thresh,
         )
 
 
@@ -221,6 +237,7 @@ def main(
     conv,
     statplot,
     cophen_dist_thresh: float,
+    rel_cov_change_sig_thresh: float,
 ):
     # Determine MPI context ---------------------------------------------------
     mp_con = BasicMPIContext()
@@ -298,7 +315,9 @@ def main(
                 peak_log_local.append(peak_info)
                 break
 
-            if _process_peak(peak, peak_info, peak_log_local):
+            if _process_peak(
+                peak, peak_info, peak_log_local, rel_cov_change_sig_thresh
+            ):
                 plotdec = "pass"
 
         if max_cov < min_cov_depth:

@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
     library(stringr)
     library(ggforce)
     library(patchwork)
+    library(scales)
 })
 
 def_theme <- theme_classic() +
@@ -69,7 +70,10 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name, lowlim, uplim)
             strip.background = element_rect(fill = "#cdcdcd", linewidth = 0),
         ) +
         scale_linetype_manual(values = c("True" = "solid", "False" = "dotted")) +
-        coord_cartesian(ylim = c(lowlim, uplim)) +
+        coord_cartesian(
+            ylim = c(lowlim, uplim), 
+            xlim = c(min(df$from_riboswitch_end_relative)*1.05, max(df$from_riboswitch_end_relative)*1.05)
+        ) +
         guides(alpha = "none", color = "none", linetype = "none")
 
     if (nrow(statdf) > 0) {
@@ -79,7 +83,7 @@ peakplotmaker <- function(plog_path, cstats_path, out_path, name, lowlim, uplim)
     # peakplot
 
     print(str_glue("Saving plot: {name}"))
-    alph <- 0.7
+    alph <- 1
     if (file_ext(out_path) == "pdf"){
         ggsave(out_path, plot = peakplot, dpi = 320 * alph, units = "px", width = 7000 * alph, height = 4000 * alph, device = cairo_pdf)
     }

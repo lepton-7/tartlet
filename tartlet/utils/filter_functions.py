@@ -14,6 +14,7 @@ class DefaultThresholds:
     def check(
         cand: Candidate,
         rel_cov_change_sig_thresh: float,
+        relative_size_bound_thresh: float 
     ):
         d = DefaultThresholds
         issues = []
@@ -24,9 +25,9 @@ class DefaultThresholds:
                 f"Drop not significant ({cand.coverage_drop_pvalue:.2f} >= {d.peak_sig_thresh})"
             )
 
-        if abs(cand.from_switch_end_relative) > d.relative_size_bounds:
+        if abs(cand.from_switch_end_relative) > relative_size_bound_thresh:
             issues.append(
-                f"Too far from end (abs({cand.from_switch_end_relative:.2f}) > {d.relative_size_bounds})"
+                f"Too far from end (abs({cand.from_switch_end_relative:.2f}) > {relative_size_bound_thresh})"
             )
         if cand.stable_rel_cov_delta > float(rel_cov_change_sig_thresh):
             issues.append(

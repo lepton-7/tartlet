@@ -42,9 +42,10 @@ def _process_peak(
     peaklog: dict,
     peaklog_loc: list,
     rel_cov_change_sig_thresh: float,
+    relative_size_bound_thresh: float,
 ):
 
-    dec = checker.check(peak, rel_cov_change_sig_thresh)
+    dec = checker.check(peak, rel_cov_change_sig_thresh, relative_size_bound_thresh)
     peaklog["decision"] = dec
 
     _log_cand_charac(peaklog, peak)
@@ -85,6 +86,7 @@ def _process_candidate_list(
     ref: str,
     transcriptome: str,
     rel_cov_change_sig_thresh: float,
+    relative_size_bound_thresh: float,
 ):
     """DEPR
 
@@ -108,7 +110,9 @@ def _process_candidate_list(
         align_charac = {}
         align_charac["rowid"] = ref
         align_charac["transcriptome"] = str(transcriptome)
-        decision = checker.check(cand, rel_cov_change_sig_thresh)
+        decision = checker.check(
+            cand, rel_cov_change_sig_thresh, relative_size_bound_thresh
+        )
         align_charac["decision"] = decision
 
         if decision == "pass":
@@ -120,7 +124,9 @@ def _process_candidate_list(
     align_charac = {}
     align_charac["rowid"] = ref
     align_charac["transcriptome"] = str(transcriptome)
-    decision = checker.check(candlist[0], rel_cov_change_sig_thresh)
+    decision = checker.check(
+        candlist[0], rel_cov_change_sig_thresh, relative_size_bound_thresh
+    )
     align_charac["decision"] = decision
     _log_cand_charac(align_charac, candlist[0])
     charac_local.append(align_charac)
@@ -164,6 +170,15 @@ def _process_candidate_list(
         Similarly, passing -0.2 -0.6 sets the search space as 20bp into the 5' end and 60bp from the 3' end.",
 )
 @click.option(
+    "--roi",
+    default=0.5,
+    show_default=True,
+    help="Sets the symmetric bounds for the riboswitch region of interest centred around the riboswitch 3' end. This is the region within which peaks are tested for significance. \
+        \
+        For example, passing a value of 0.3 implies that only peaks in the region within ±0.3 * riboswitch size of the riboswitch 3' end are candidates for transcription termination event significance testing. \
+        Negative values will be absoluted.",
+)
+@click.option(
     "--run-depr", is_flag=True, help="(Dev use) Run the deprecated version instead."
 )
 @click.option(
@@ -201,6 +216,7 @@ def exec_main(
     bin_size,
     min_cov_depth,
     ext_prop,
+    roi,
     run_depr,
     noplots,
     conv,
@@ -219,6 +235,7 @@ def exec_main(
             bin_size,
             min_cov_depth,
             ext_prop,
+            roi,
             noplots,
             conv,
             statplot,
@@ -229,16 +246,19 @@ def exec_main(
 
 def main(
     pick_root: str,
-    out_dir,
-    bin_size,
+    out_dir: str,
+    bin_size: int,
     min_cov_depth,
-    ext_prop,
+    ext_prop: tuple[float],
+    roi_val: float,
     noplots,
     conv,
     statplot,
     cophen_dist_thresh: float,
     rel_cov_change_sig_thresh: float,
 ):
+
+    roi_val = abs(roi_val)
     # Determine MPI context ---------------------------------------------------
     mp_con = BasicMPIContext()
     comm = mp_con.comm
@@ -297,7 +317,7 @@ def main(
         # This needs to be done to avoid clutter in the results
         # that failed the filter
         max_cov = max(alignDat.readcov[alignDat.switch_start : alignDat.switch_end])
-        roi = (checker.relative_size_bounds, checker.relative_size_bounds)
+        roi = (roi_val, roi_val)
 
         plotdec = "fail"
 
@@ -316,7 +336,11 @@ def main(
                 break
 
             if _process_peak(
-                peak, peak_info, peak_log_local, rel_cov_change_sig_thresh
+                peak,
+                peak_info,
+                peak_log_local,
+                rel_cov_change_sig_thresh,
+                roi_val,
             ):
                 plotdec = "pass"
 

@@ -8,7 +8,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="tartlet",
-    version="0.8.11",
+    version="0.9.0",
     author="Sachit Kshatriya",
     author_email="sxk1464@case.edu",
     license="MIT",

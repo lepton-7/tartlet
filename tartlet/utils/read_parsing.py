@@ -592,7 +592,9 @@ class AlignDat:
         if r is not None:
             self.fragments[r].append(pair.fragment_termini)
 
-    def process_pairs(self, pairs: list[ReadPair], allowSoftClips: bool, allowSingleReads: bool = True) -> "AlignDat":
+    def process_pairs(
+        self, pairs: list[ReadPair], allowSoftClips: bool, allowSingleReads: bool = True
+    ) -> "AlignDat":
         """Process a list of ReadPair objects to extract alignment coverage and ends data.
 
         Args:
@@ -709,10 +711,13 @@ class AlignDat:
 
 
 class SegregatedAlignDat(AlignDat):
-    def __init__(self, ref: str, reflength: int, boundsDict: dict[str, list]) -> None:
+    def __init__(
+        self, ref: str, reflength: int, boundsDict: dict[str, list], roi: float
+    ) -> None:
         self.ref = ref
         self.ref_length = reflength
         self.bounds_dict = boundsDict
+        self.roi = abs(roi)
 
         self.of_3prime: AlignDat
         self.except_3prime: AlignDat
@@ -735,7 +740,7 @@ class SegregatedAlignDat(AlignDat):
         #     * fil.DefaultThresholds.relative_size_bounds
         # )
 
-        marg = int(abs(self.switch_end - self.switch_start) * 0.3)
+        marg = int(abs(self.switch_end - self.switch_start) * self.roi)
         endmargins = (self.switch_end - marg, self.switch_end + marg)
 
         _pairs_of3prime: list[ReadPair] = []
@@ -853,7 +858,7 @@ class SortedBAM:
         return toRet
 
     def generate_ref_alignment_data(
-        self, allowSoftClips: bool, allowSingleReads: bool
+        self, allowSoftClips: bool, allowSingleReads: bool, roi: float
     ) -> list[SegregatedAlignDat]:
         """Generate alignment data for each reference found in the sorted BAM using all aligned reads/read pairs and return as a list.
 
@@ -873,7 +878,7 @@ class SortedBAM:
             boundDict = self.ref_loc_dict[ref]
 
             data.append(
-                SegregatedAlignDat(ref, reflength, boundDict).process_pairs(
+                SegregatedAlignDat(ref, reflength, boundDict, roi).process_pairs(
                     readpairs, allowSoftClips, allowSingleReads
                 )
             )

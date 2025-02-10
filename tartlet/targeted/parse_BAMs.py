@@ -56,8 +56,25 @@ from tartlet.utils.mpi_context import BasicMPIContext
     is_flag=True,
     help="Reads with unmapped mates (single reads) are thrown out unless this flag is set.",
 )
+@click.option(
+    "--roi",
+    default=0.5,
+    show_default=True,
+    help="Sets the symmetric bounds for the riboswitch region of interest centred around the riboswitch 3' end. This is the region within which peaks are tested for significance. \
+        \
+        For example, passing a value of 0.3 implies that only peaks in the region within ±0.3 * riboswitch size of the riboswitch 3' end are candidates for transcription termination event significance testing. \
+        Negative values will be absoluted.",
+)
 def main(
-    bam_dir, out_dir, bounds_file, min_coverage, outPlots, outPickles, allow_soft_clips, allow_single_reads
+    bam_dir,
+    out_dir,
+    bounds_file,
+    min_coverage,
+    outPlots,
+    outPickles,
+    allow_soft_clips,
+    allow_single_reads,
+    roi,
 ):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -86,7 +103,9 @@ def main(
         # back to a Path. Don't @ me this works just fine.
         # save_dir = Path(str(out_dir.joinpath(*bam_split[-2:]))[:-11])
 
-        alignDat_arr = bam_wrap.generate_ref_alignment_data(allow_soft_clips, allow_single_reads)
+        alignDat_arr = bam_wrap.generate_ref_alignment_data(
+            allow_soft_clips, allow_single_reads, roi
+        )
 
         for alignDat in alignDat_arr:
 

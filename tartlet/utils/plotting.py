@@ -319,7 +319,9 @@ class CoveragePlot:
             bottom += count
 
         ax.set_facecolor(self.palette["axback"])
-        ax.set_title("Fragment coverage", fontsize=self.panel_title_size)
+        ax.set_title(
+            "Fragment coverage: All mapped pairs", fontsize=self.panel_title_size
+        )
         ax.legend(loc="upper left")
         ax.set_ylabel(self.axis_label_coverage, self.axis_label_args)
         ax.yaxis.set_tick_params(labelsize=self.tick_lab_size)
@@ -361,8 +363,8 @@ class CoveragePlot:
         )
         fig.suptitle(f"{self._dat.ref}", fontsize=self.panel_title_size)
 
-        self._coverage_panel(ax[2])
         self._split_coverage_panels(ax[0], ax[1])
+        self._coverage_panel(ax[2])
         self._conv_ends_panel(ax[-1]) if with_conv else self._binned_ends_panel(ax[-1])
 
         fig.savefig(f"{save_path}")
@@ -439,7 +441,10 @@ class CoveragePlot:
             bottom3p += count
 
         ax3p.set_facecolor(self.palette["axback"])
-        ax3p.set_title("Fragment coverage", fontsize=self.panel_title_size)
+        ax3p.set_title(
+            "Fragment coverage: Pairs with R reads originating within riboswitch region of interest",
+            fontsize=self.panel_title_size,
+        )
         ax3p.legend(loc="upper left")
         ax3p.set_ylabel(self.axis_label_coverage, self.axis_label_args)
         ax3p.yaxis.set_tick_params(labelsize=self.tick_lab_size)
@@ -460,7 +465,10 @@ class CoveragePlot:
             bottomno3p += count
 
         axnot3p.set_facecolor(self.palette["axback"])
-        axnot3p.set_title("Fragment coverage", fontsize=self.panel_title_size)
+        axnot3p.set_title(
+            "Fragment coverage: Pairs with R reads originating outside riboswitch region of interest",
+            fontsize=self.panel_title_size,
+        )
         axnot3p.legend(loc="upper left")
         axnot3p.set_ylabel(self.axis_label_coverage, self.axis_label_args)
         axnot3p.yaxis.set_tick_params(labelsize=self.tick_lab_size)

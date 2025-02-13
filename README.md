@@ -1,5 +1,7 @@
 # Transcriptionally-active Riboswitch Tracer Leveraging Edge deTection (TaRTLEt)
 
+[![DOI](https://zenodo.org/badge/864227166.svg)](https://doi.org/10.5281/zenodo.14866619)
+
 Finds transcriptional riboswitch activity in RNA-seq data.
 
 ## Installation

@@ -1,10 +1,10 @@
-# Transcriptionally-active Riboswitch Tracer Leveraging Edge deTection (TaRTLET)
+# Transcriptionally-active Riboswitch Tracer Leveraging Edge deTection (TaRTLEt)
 
 Finds transcriptional riboswitch activity in RNA-seq data.
 
 ## Installation
 
-TaRTLET is currently only compatible on Unix devices. We provide a conda environment to install all the necessary dependencies and packages required for running TaRTLET. From the repository root:
+TaRTLEt is currently only compatible on Unix devices. We provide a conda environment to install all the necessary dependencies and packages required for running TaRTLEt. From the repository root:
 
 ```bash
 conda env create --file env.yaml

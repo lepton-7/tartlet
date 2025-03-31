@@ -21,6 +21,14 @@ conda config --set solver libmamba
 
 More details may be found on the [Anaconda blog](https://www.anaconda.com/blog/a-faster-conda-for-a-growing-community).
 
+Once the environment is setup, install `TaRTLeT` by running the `install.sh` script or:
+
+```bash
+pip install -e .
+```
+
+Confirm installing with `tartlet-targeted --help`.
+
 ## Using the tool
 
 A walkthrough of the tool's operation using data generated for the manuscript is available in the [tool validation](https://github.com/lepton-7/tartlet-pub) repository.

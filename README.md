@@ -27,7 +27,7 @@ Once the environment is setup, install `TaRTLeT` by running the `install.sh` scr
 pip install -e .
 ```
 
-Confirm installing with `tartlet-targeted --help`.
+Confirm installation with `tartlet-targeted --help`.
 
 ## Using the tool
 

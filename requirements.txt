@@ -13,6 +13,7 @@ decorator
 executing
 fonttools
 idna
+importlib_resources
 ipykernel
 ipython
 jedi
@@ -41,6 +42,7 @@ python-dateutil
 pytz
 pyzmq
 requests
+rpy2
 scipy
 six
 stack-data

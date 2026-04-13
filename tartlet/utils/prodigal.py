@@ -5,7 +5,7 @@ import multiprocessing as mp
 
 from glob import glob
 from pathlib import Path
-from functools import partial
+from functools import partial, reduce
 from Bio import SeqIO, SeqRecord
 from subprocess import run, PIPE
 from tartlet.utils.utils import print, rowid
@@ -138,6 +138,44 @@ def prodigal(
         )
 
 
+def _worker_genome_records(
+    genome_name: str,
+    prodigal_dir: Path,
+    df: pd.DataFrame,
+) -> dict[list]:
+    """Helper to record ORF locations from a genome name
+
+    Args:
+        genome_name (str): Genome name
+        prodigal_dir (Path): Directory with prodigal calls
+        df (pd.DataFrame): ledger
+
+    Returns:
+        dict[list]: Map of ORF locations
+    """
+    local_d = {}
+    genome_path = prodigal_dir.joinpath(f"{genome_name}.faa")
+
+    if not genome_path.is_file:
+        print(
+            f"Prodigal output {genome_path} does not exist.\nSkipping for {genome_name}."
+        )
+        return local_d
+
+    orfs = ProdigalOutput(genome_path)
+
+    for i, row in df[df["genome_accession"] == genome_name].iterrows():
+        strand = -1 if row["strand"] == "-" else 1
+        downstream = orfs.find_downstream_orf(
+            row["seq_from"], strand, row["query_name"]
+        )
+
+        if downstream is not None:
+            local_d[rowid(row)] = [i, downstream.orf_from, downstream.orf_to]
+
+    return local_d
+
+
 @click.command()
 @click.option(
     "-o", "--out-dir", required=True, help="Output directory for prodigal outputs."
@@ -212,37 +250,26 @@ def record_orf_locations(ledger, prodigal_dir):
 
     # MPI setup for unique genomes
     mp_con = BasicMPIContext(list(pd.unique(df["genome_accession"])))
+    rank = mp_con.rank
+    size = mp_con.size
     worker_list = mp_con.generate_worker_list()
+    cpus = len(os.sched_getaffinity(0))
 
-    local_entries = {}
-    for genome_name in worker_list:
-        genome_path = prodigal_dir.joinpath(f"{genome_name}.faa")
+    if rank == 0:
+        print(f"Started {size} workers with {cpus} CPUs each.")
 
-        if not genome_path.is_file:
-            print(
-                f"Prodigal output {genome_path} does not exist.\nSkipping for {genome_name}."
-            )
-            continue
+    mp_genome_orfs = partial(_worker_genome_records, prodigal_dir=prodigal_dir, df=df)
+    with mp.Pool(cpus) as pool:
+        if rank == 0:
+            print(f"Started a pool with {cpus} processes")
+        loc_entries_arr = pool.map(mp_genome_orfs, worker_list)
+        local_entries = reduce(dict.__or__, loc_entries_arr)
 
-        orfs = ProdigalOutput(genome_path)
-
-        for i, row in df.iterrows():
-            if row["genome_accession"] != genome_name:
-                continue
-
-            strand = -1 if row["strand"] == "-" else 1
-            downstream = orfs.find_downstream_orf(
-                row["seq_from"], strand, row["query_name"]
-            )
-
-            if downstream is not None:
-                local_entries[rowid(row)] = [i, downstream.orf_from, downstream.orf_to]
-
-    if mp_con.rank == 0:
+    if rank == 0:
         print("Gathering entries...")
     entries_arr = mp_con.comm.gather(local_entries, root=0)
 
-    if mp_con.rank == 0 and entries_arr is not None:
+    if rank == 0 and entries_arr is not None:
         print("Completed gather.")
         # Check if ORF locations are already recorded and handle accordingly
         if "orf_from" in df.columns and "orf_to" in df.columns:

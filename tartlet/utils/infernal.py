@@ -327,6 +327,10 @@ from os import getcwd
 @click.option("-o", "--out-path", required=True, help="Output .csv table path")
 def parse_results(in_dir, out_path):
     in_dir = Path(in_dir)
+    out_path = Path(out_path)
+
+    out_path.parent.mkdir(exist_ok=True, parents=True)
+
     if not in_dir.is_dir():
         raise ValueError(f"Path {in_dir} is not a directory.")
 

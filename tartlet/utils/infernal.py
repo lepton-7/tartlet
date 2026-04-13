@@ -1,10 +1,13 @@
+import os
 import click
 import requests
 import pandas as pd
+import multiprocessing as mp
 
 from glob import glob
 from pathlib import Path
 from typing import Optional
+from functools import partial
 from subprocess import run, PIPE
 from tartlet.utils.mpi_context import BasicMPIContext
 from tartlet.utils.utils import print, get_datapath_obj
@@ -218,17 +221,21 @@ def default_scan_for_riboswitches(
 
     mp_con = BasicMPIContext([*total_files])
     worker_list = mp_con.generate_worker_list()
+    cpus = len(os.sched_getaffinity(0))
 
     # Check if out_dir exists
     Path(out_dir).mkdir(parents=True, exist_ok=True)
 
     if mp_con.rank == 0:
-        print(f"Started {mp_con.size} workers.")
+        print(f"Started {mp_con.size} workers with {cpus} CPUs each.")
 
-    for fasta_path in worker_list:
-        riboswitch_cmscan(
-            seq_file=fasta_path, out_dir=out_dir, rank=mp_con.rank, no_stats=no_stats
-        )
+    map_cmscan = partial(
+        riboswitch_cmscan, out_dir=out_dir, rank=mp_con.rank, no_stats=no_stats
+    )
+    with mp.Pool(cpus) as pool:
+        if mp_con.rank == 0:
+            print(f"Started a pool with {cpus} processes")
+        pool.map(map_cmscan, worker_list, chunksize=1)
 
 
 def __infernal_to_df(fpath: Path, name: str = None):
@@ -311,7 +318,9 @@ def __infernal_to_df(fpath: Path, name: str = None):
 
     return df
 
+
 from os import getcwd
+
 
 @click.command()
 @click.option("-i", "--in-dir", required=True, help="Infernal results directory path")

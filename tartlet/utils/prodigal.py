@@ -1,8 +1,11 @@
+import os
 import click
 import pandas as pd
+import multiprocessing as mp
 
 from glob import glob
 from pathlib import Path
+from functools import partial
 from Bio import SeqIO, SeqRecord
 from subprocess import run, PIPE
 from tartlet.utils.utils import print, rowid
@@ -161,21 +164,25 @@ def default_prodigal(out_dir, total_files: tuple | list):
 
     mp_con.set_full_list([*total_files])
     worker_list = mp_con.generate_worker_list()
+    cpus = len(os.sched_getaffinity(0))
 
     if mp_con.rank == 0:
-        print(f"Started {mp_con.size} workers.")
+        print(f"Started {mp_con.size} workers with {cpus} CPUs each.")
 
     options = ["-q"]
+    mp_prod = partial(
+        prodigal,
+        out_dir=out_dir,
+        options=options,
+        rank=mp_con.rank,
+        trans_file=None,
+        output_file=None,
+    )
 
-    for fasta_path in worker_list:
-        prodigal(
-            input_file=fasta_path,
-            out_dir=out_dir,
-            options=options,
-            rank=mp_con.rank,
-            trans_file=None,
-            output_file=None,
-        )
+    with mp.Pool(cpus) as pool:
+        if mp_con.rank == 0:
+            print(f"Started a pool with {cpus} processes")
+        pool.map(mp_prod, worker_list, chunksize=1)
 
 
 @click.command()

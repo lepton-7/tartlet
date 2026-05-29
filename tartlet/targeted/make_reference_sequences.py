@@ -5,11 +5,10 @@ import os
 import click
 import pandas as pd
 
-from glob import glob
 from pathlib import Path
 from Bio import SeqIO, Seq
 from collections import defaultdict
-from tartlet.utils.utils import print
+from tartlet.utils.utils import timestamped_print as print
 from tartlet.utils.mpi_context import BasicMPIContext
 
 
@@ -76,13 +75,16 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
     if dset is not None:
         table = table[table["dataset"] == dset]
 
-    if not Path(genome_dir).exists():
+    genome_dir = Path(genome_dir)
+    out_dir = Path(out_dir)
+
+    if not genome_dir.exists():
         raise ValueError(f" File/directory {genome_dir} does not exist")
 
-    if Path(genome_dir).is_dir():
-        genomes_list = glob(f"{genome_dir}/*.fna")
+    if genome_dir.is_dir():
+        genomes_list = [*genome_dir.glob(f"*.fna")]
 
-    elif Path(genome_dir).is_file():
+    elif genome_dir.is_file():
         genomes_list = [genome_dir]
 
     else:
@@ -184,7 +186,7 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
                 seqs_ledger[switchclass].update(seqs)
 
         # Make the sub directory to save sequences in fasta format
-        Path(f"{out_dir}").mkdir(parents=True, exist_ok=True)
+        out_dir.mkdir(parents=True, exist_ok=True)
 
         num_switch_classes = len(seqs_ledger)
     else:
@@ -196,16 +198,6 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
         num_switch_classes = comm.bcast(num_switch_classes, root=0)
     else:
         num_switch_classes = 0
-
-    def write_step(classname, sub_d):
-        # Write riboswitch sequences to disk
-        # if rank > 0:
-        fpath = f"{out_dir}/{classname}.fna"
-
-        with open(fpath, "w") as f:
-            for key, val in sub_d.items():
-                f.write(">{}\n".format(key))
-                f.write("{}\n".format(val))
 
     def multithreaded_writeout(num_switch_classes, seqs_ledger):
         # Setup a dummy list to be able to subscript in the for loop and
@@ -227,27 +219,13 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
                 sub_d = comm.recv(source=0, tag=100)  # type: ignore
 
                 # Write riboswitch sequences to disk
-                write_step(classname, sub_d)  # type: ignore
-
-    def singlethreaded_writeout(seqs_ledger):
-        if rank == 0:
-            for classname, sub_d in seqs_ledger.items():
-                write_step(classname, sub_d)
-
-    def unified_writeout(seqs_ledger):
-        if rank == 0:
-            print("Starting unified write-out.")
-            unified_dict = {}
-            for _, sub_d in seqs_ledger.items():
-                unified_dict.update(sub_d)
-
-            write_step("unified", unified_dict)
+                write_step(classname, sub_d, out_dir)  # type: ignore
 
     # Each riboswitch class sub-dictionary is sent to a worker for disk writes
     # if there are enough workers for that. Otherwise the root performs the write out
 
     if unify:
-        unified_writeout(seqs_ledger)
+        unified_writeout(seqs_ledger, out_dir) if rank == 0 else None
 
     elif not unify and size > int(num_switch_classes):
         # Exit workers that are not needed
@@ -258,7 +236,33 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
             classname = None
             sub_d = None
 
-        multithreaded_writeout(num_switch_classes, seqs_ledger)  # type: ignore
+        # TODO: Refactor to use both MPI and mp
+        multithreaded_writeout(num_switch_classes, seqs_ledger)
 
     else:
-        singlethreaded_writeout(seqs_ledger)  # type: ignore
+        singlethreaded_writeout(seqs_ledger, out_dir) if rank == 0 else None
+
+
+def write_step(classname: str, sub_d: dict, out_dir: Path):
+    # Write riboswitch sequences to disk
+    # if rank > 0:
+    fpath = out_dir.joinpath(f"{classname}.fna")
+
+    with open(fpath, "w") as f:
+        for key, val in sub_d.items():
+            f.write(f">{key}\n")
+            f.write(f"{val}\n")
+
+
+def singlethreaded_writeout(seqs_ledger: dict, out_dir: Path):
+    for classname, sub_d in seqs_ledger.items():
+        write_step(classname, sub_d, out_dir)
+
+
+def unified_writeout(seqs_ledger: dict, out_dir: Path):
+    print("Starting unified write-out.")
+    unified_dict = {}
+    for _, sub_d in seqs_ledger.items():
+        unified_dict.update(sub_d)
+
+    write_step("unified", unified_dict, out_dir)

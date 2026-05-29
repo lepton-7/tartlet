@@ -10,8 +10,8 @@ from pathlib import Path
 from Bio import SeqIO, Seq
 from functools import partial
 from collections import defaultdict
-from tartlet.utils.utils import timestamped_print as print
 from tartlet.utils.mpi_context import BasicMPIContext
+from tartlet.utils.utils import timestamped_print as print
 
 
 def _get_buffered_seq(

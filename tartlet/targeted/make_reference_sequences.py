@@ -4,12 +4,72 @@
 import os
 import click
 import pandas as pd
+import multiprocessing as mp
 
 from pathlib import Path
 from Bio import SeqIO, Seq
+from functools import partial
 from collections import defaultdict
 from tartlet.utils.utils import timestamped_print as print
 from tartlet.utils.mpi_context import BasicMPIContext
+
+
+def _get_buffered_seq(
+    MAG_path: Path, table: pd.DataFrame, pre_delta: int, post_delta: int
+) -> list[tuple[str, dict]]:
+    """Called in an MP pool"""
+
+    MAGDict = {x.id: str(x.seq) for x in SeqIO.parse(MAG_path, "fasta")}
+    subset = table[table["genome_accession"] == MAG_path.stem]
+    ret = []
+
+    for _, row in subset.iterrows():  # iterate over MAG riboswitches
+        # Infernal start and stop entries are relative to canonical 5' -> 3';
+        # need to account for that when slicing the sequence
+        if row["strand"] == "+":
+            start = int(row["seq_from"])
+            end = int(row["seq_to"])
+
+        elif row["strand"] == "-":
+            start = int(row["seq_to"])
+            end = int(row["seq_from"])
+
+        else:
+            print(f"Yikes: strand notation not recognised.")  # should not be possible
+            continue
+
+        contigseq = MAGDict[row["query_name"]]
+
+        # Adjust bounds with delta
+        start -= pre_delta
+        end += post_delta
+
+        # Validate bounds
+        if start < 0:
+            start = 0
+        if end > len(contigseq):
+            end = len(contigseq)
+
+        # Find query seq
+        switch = contigseq[start:end]
+
+        # switch is on the (-) strand
+        if row["strand"] == "-":
+            switch = Seq.reverse_complement(switch)
+
+        # Add the sequence to the dict
+        classname: str = row["target_name"]
+        qname = row["query_name"]
+        frm = row["seq_from"]
+        to = row["seq_to"]
+        strand = row["strand"]
+
+        # No spaces to ensure the entire string is recognised as the ID
+        rowid = f"{classname}#{qname}#{frm}#{to}#{strand}"
+
+        ret.append((classname, {rowid: str(switch)}))
+        # seqs_local[classname].update({rowid: switch})
+    return ret
 
 
 @click.command()
@@ -97,9 +157,10 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
     comm = mp_con.comm
     size = mp_con.size
     rank = mp_con.rank
+    alloc_cpus = len(os.sched_getaffinity(0))
 
     if rank == 0:
-        print(f"Started {size} instance(s)")
+        print(f"Started {size} worker(s) with {alloc_cpus} cores each")
 
     local_path_list = mp_con.generate_worker_list()
 
@@ -115,59 +176,18 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
     # seqs_local = {str(rank) : rank * 50}
 
     if mp_con.is_active:
-        for MAG_path in local_path_list:  # iterate over derep95 MAGs
-            MAGDict = {x.id: str(x.seq) for x in SeqIO.parse(MAG_path, "fasta")}
-            subset = table[
-                table["genome_accession"] == os.path.split(MAG_path)[-1][:-4]
-            ]
+        with mp.Pool(alloc_cpus) as pool:
+            print(f"Started a pool with {alloc_cpus} processes")
+            subset_f = partial(
+                _get_buffered_seq,
+                table=table,
+                pre_delta=pre_delta,
+                post_delta=post_delta,
+            )
+            ret_l = pool.map(subset_f, local_path_list)
 
-            for _, row in subset.iterrows():  # iterate over MAG riboswitches
-                # Infernal start and stop entries are relative to canonical 5' -> 3';
-                # need to account for that when slicing the sequence
-                if row["strand"] == "+":
-                    start = int(row["seq_from"])
-                    end = int(row["seq_to"])
-
-                elif row["strand"] == "-":
-                    start = int(row["seq_to"])
-                    end = int(row["seq_from"])
-
-                else:
-                    print(
-                        f"Yikes: strand notation not recognised."
-                    )  # should not be possible
-                    continue
-
-                contigseq = MAGDict[row["query_name"]]
-
-                # Adjust bounds with delta
-                start -= pre_delta
-                end += post_delta
-
-                # Validate bounds
-                if start < 0:
-                    start = 0
-                if end > len(contigseq):
-                    end = len(contigseq)
-
-                # Find query seq
-                switch = contigseq[start:end]
-
-                # switch is on the (-) strand
-                if row["strand"] == "-":
-                    switch = Seq.reverse_complement(switch)
-
-                # Add the sequence to the dict
-                classname = row["target_name"]
-                qname = row["query_name"]
-                frm = row["seq_from"]
-                to = row["seq_to"]
-                strand = row["strand"]
-
-                # No spaces to ensure the entire string is recognised as the ID
-                rowid = f"{classname}#{qname}#{frm}#{to}#{strand}"
-
-                seqs_local[classname].update({rowid: switch})
+        # Collect all the buffered sequences into the local dictionary
+        _ = [seqs_local[classname].update(d) for tup in ret_l for classname, d in tup]
 
     seqs_arr = comm.gather(seqs_local, root=0)
 

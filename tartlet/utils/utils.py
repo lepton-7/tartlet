@@ -3,6 +3,15 @@ import pathlib
 import importlib_resources
 
 from pandas import Series
+from datetime import datetime
+
+
+def timestamped_print(*args, v: bool = True, **kwargs):
+    if not v:
+        return
+    prefd = [datetime.now(), "|", *args]
+    arg = " ".join([str(a) for a in prefd])
+    click.echo(arg)
 
 
 def print(obj):

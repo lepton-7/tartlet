@@ -238,7 +238,7 @@ def default_scan_for_riboswitches(
         pool.map(map_cmscan, worker_list, chunksize=1)
 
 
-def __infernal_to_df(fpath: Path, name: str = None):
+def __infernal_to_df(fpath: Path, name: str | None = None):
     if name is None:
         name = fpath.stem.split(".")[0]
         print(f"Dataset name not provided for {fpath}, using {name}")

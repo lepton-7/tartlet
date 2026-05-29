@@ -177,7 +177,7 @@ def main(ledger_path, out_dir, genome_dir, dset, pre_delta, post_delta, unify):
 
     if mp_con.is_active:
         with mp.Pool(alloc_cpus) as pool:
-            print(f"Started a pool with {alloc_cpus} processes")
+            print(f"Started a pool with {alloc_cpus} processes") if rank == 0 else None
             subset_f = partial(
                 _get_buffered_seq,
                 table=table,

@@ -1,13 +1,67 @@
+import os
 import click
 import pickle
 import tarfile as tf
+import multiprocessing as mp
 
-from glob import glob
 from pathlib import Path
 from shutil import rmtree
+from functools import partial
 from tartlet.utils.plotting import CoveragePlot
 from tartlet.utils.read_parsing import SortedBAM
 from tartlet.utils.mpi_context import BasicMPIContext
+from tartlet.utils.utils import timestamped_print as print
+
+
+def parse_and_save(
+    bam_path: Path,
+    out_dir: Path,
+    bounds_file: str,
+    rank: int,
+    allow_soft_clips,
+    allow_single_reads,
+    roi,
+    outPlots,
+    outPickles,
+    min_coverage,
+):
+    bam_wrap = SortedBAM(str(bam_path), bounds_file)
+
+    # This looks something like this:
+    # /users/PDS0325/sachitk26/ribo_acclim/metatranscriptomics/
+    # switch_alignment/switch_seqs_delta500/alignments_full/AdoCbl_riboswitch/AdoCbl_riboswitch.MainAutochamber.201707_E_2_20to24.sorted.bam
+    bam_split = bam_path.parts
+
+    # Looks like:
+    # save_dir/AdoCbl_riboswitch/AdoCbl_riboswitch.MainAutochamber.201707_E_2_20to24
+    #
+    # The [:-11] removes the .sorted.bam suffix from the path, but Path objects are
+    # not subscriptable, so it needs to be typecasted to str, sliced, then converted
+    # back to a Path. Don't @ me this works just fine.
+    # save_dir = Path(str(out_dir.joinpath(*bam_split[-2:]))[:-11])
+
+    alignDat_arr = bam_wrap.generate_ref_alignment_data(
+        allow_soft_clips, allow_single_reads, roi
+    )
+
+    for alignDat in alignDat_arr:
+        # Construct save subdir based on ref name
+        save_dir = Path(str(out_dir.joinpath(alignDat.switch_class, bam_split[-1])))
+        save_dir.mkdir(parents=True, exist_ok=True)
+
+        if outPlots and alignDat.is_coverage_threshold("read", min_coverage):
+            save_path = save_dir.joinpath(f"{alignDat.ref}.png")
+            CoveragePlot(alignDat, [40, 40]).default(save_path)
+
+        if outPickles and alignDat.is_coverage_threshold("read", min_coverage):
+            print(
+                f"Mapped in switch = {alignDat.total.mapped_in_switch} ; Unmapped in switch = {alignDat.total.unmapped_in_switch}"
+            )
+            save_path = save_dir.joinpath(f"{alignDat.ref}.p")
+            with open(save_path, "wb") as f:
+                pickle.dump(alignDat, f)
+
+    print(f"Completed processing {bam_path} on worker {rank}")
 
 
 @click.command()
@@ -77,58 +131,43 @@ def main(
     roi,
 ):
     out_dir = Path(out_dir)
+    bam_dir = Path(bam_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # List of all sorted BAMS to process
-    total_files = glob(f"{bam_dir}/**/*.sorted.bam")
+    total_files = [*bam_dir.glob(f"**/*.sorted.bam")]
 
     # MPI setup
     mp_con = BasicMPIContext(total_files)
+    rank = mp_con.rank
+    size = mp_con.size
+    alloc_cpus = len(os.sched_getaffinity(0))
+
+    print(f"Started {size} workers with {alloc_cpus} cores each") if rank == 0 else None
+
     worker_list = mp_con.generate_worker_list()
 
-    for bam_path in worker_list:
-        bam_wrap = SortedBAM(bam_path, bounds_file)
+    f = partial(
+        parse_and_save,
+        out_dir=out_dir,
+        bounds_file=bounds_file,
+        rank=rank,
+        allow_soft_clips=allow_soft_clips,
+        allow_single_reads=allow_single_reads,
+        roi=roi,
+        outPlots=outPlots,
+        outPickles=outPickles,
+        min_coverage=min_coverage,
+    )
 
-        # This looks something like this:
-        # /users/PDS0325/sachitk26/ribo_acclim/metatranscriptomics/
-        # switch_alignment/switch_seqs_delta500/alignments_full/AdoCbl_riboswitch/AdoCbl_riboswitch.MainAutochamber.201707_E_2_20to24.sorted.bam
-        bam_path = Path(bam_path)
-        bam_split = bam_path.parts
-
-        # Looks like:
-        # save_dir/AdoCbl_riboswitch/AdoCbl_riboswitch.MainAutochamber.201707_E_2_20to24
-        #
-        # The [:-11] removes the .sorted.bam suffix from the path, but Path objects are
-        # not subscriptable, so it needs to be typecasted to str, sliced, then converted
-        # back to a Path. Don't @ me this works just fine.
-        # save_dir = Path(str(out_dir.joinpath(*bam_split[-2:]))[:-11])
-
-        alignDat_arr = bam_wrap.generate_ref_alignment_data(
-            allow_soft_clips, allow_single_reads, roi
-        )
-
-        for alignDat in alignDat_arr:
-
-            # Construct save subdir based on ref name
-            save_dir = Path(str(out_dir.joinpath(alignDat.switch_class, bam_split[-1])))
-            save_dir.mkdir(parents=True, exist_ok=True)
-
-            if outPlots and alignDat.is_coverage_threshold("read", min_coverage):
-                save_path = save_dir.joinpath(f"{alignDat.ref}.png")
-                CoveragePlot(alignDat, [40, 40]).default(save_path)
-
-            if outPickles and alignDat.is_coverage_threshold("read", min_coverage):
-                click.echo(
-                    f"Mapped in switch = {alignDat.total.mapped_in_switch} ; Unmapped in switch = {alignDat.total.unmapped_in_switch}"
-                )
-                save_path = save_dir.joinpath(f"{alignDat.ref}.p")
-                with open(save_path, "wb") as f:
-                    pickle.dump(alignDat, f)
+    with mp.Pool(alloc_cpus) as pool:
+        print(f"Started pool with {alloc_cpus} cores") if rank == 0 else None
+        _ = pool.map(f, worker_list, chunksize=1)
 
     # This is just so that the root waits until all the workers are done
     done_workers = mp_con.comm.gather(mp_con.rank, root=0)
 
-    if mp_con.rank == 0 and done_workers is not None:
+    if rank == 0 and done_workers is not None:
         if len(done_workers) == mp_con.size:
             tarpath = out_dir.parent.joinpath(f"{out_dir.name}.tar.gz")
             with tf.open(tarpath, "w:gz") as picktar:

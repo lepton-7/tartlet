@@ -3,6 +3,10 @@ import pickle
 import pandas as pd
 import tarfile
 
+import warnings
+
+warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 from glob import glob
 from pathlib import Path
 from tartlet.utils.cluster import Cluster
@@ -12,6 +16,7 @@ from tartlet.utils.mpi_context import BasicMPIContext
 from tartlet.utils.activity_inference import Candidate
 from tartlet.utils.filter_functions import DefaultThresholds as checker
 from tartlet.utils.activity_inference import get_peaks
+from tartlet.utils.utils import timestamped_print as print
 
 
 def _log_cand_charac(peaklog: dict, cand: Candidate):
@@ -210,6 +215,11 @@ def _process_candidate_list(
         \
         For example, a value of -0.1 implies a peak must have a relative coverage change across it <= -0.1 in addition to an MVN p-val < 0.05 for it to 'pass'.",
 )
+@click.option(
+    "--silence",
+    is_flag=True,
+    help="(Dev use) Silence printing",
+)
 def exec_main(
     pick_root,
     out_dir,
@@ -223,6 +233,7 @@ def exec_main(
     statplot,
     cophen_dist_thresh,
     rel_cov_change_thresh,
+    silence,
 ):
     if run_depr:
         # depr_main(pick_root, out_dir, bin_size, min_cov_depth, ext_prop, conv, statplot)
@@ -241,6 +252,7 @@ def exec_main(
             statplot,
             cophen_dist_thresh,
             rel_cov_change_thresh,
+            silence,
         )
 
 
@@ -256,9 +268,11 @@ def main(
     statplot,
     cophen_dist_thresh: float,
     rel_cov_change_sig_thresh: float,
+    silence: bool,
 ):
 
     roi_val = abs(roi_val)
+    v = not silence
     # Determine MPI context ---------------------------------------------------
     mp_con = BasicMPIContext()
     comm = mp_con.comm
@@ -270,7 +284,7 @@ def main(
             with tarfile.open(pick_root, "r:gz") as picktar:
                 total_files = [x.name for x in picktar.getmembers() if x.isfile()]
         except FileNotFoundError:
-            print(f"Pickled data root {pick_root} not found.")
+            print(f"Pickled data root {pick_root} not found.", v=v)
             total_files = None
 
     else:
@@ -286,8 +300,8 @@ def main(
     worker_list: list[str] = mp_con.generate_worker_list()
 
     if rank == 0:
-        print(f"Started {mp_con.size} instances.")
-        print(f"Each instance running upto {len(worker_list)} iterations.")
+        print(f"Started {mp_con.size} instances.", v=v)
+        print(f"Each instance running upto {len(worker_list)} iterations.", v=v)
 
     # Keep track of peak log for each alignment
     peak_log_local: list[dict] = []
@@ -298,7 +312,10 @@ def main(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # First pass; find suitable candidates if present
-    for pick_file in worker_list:
+    for i, pick_file in enumerate(worker_list):
+        if rank == 0:
+            print(f"Processing pickle {i} of {len(worker_list)}", v=v)
+
         # Load in the alignment data object from the archive
         segmented = _load_alignment_data(pick_root, pick_file, rank)
         if segmented is None:
@@ -375,11 +392,11 @@ def main(
             pObj.distribution_plots(stat_path)
 
     if rank == 0:
-        print("Waiting on all instances to start gather.")
+        print("Waiting on all instances to start gather.", v=v)
     peak_log_arr = comm.gather(peak_log_local, root=0)
 
     if rank == 0:
-        print("Completed gather.")
+        print("Completed gather.", v=v)
         if peak_log_arr is None:
             raise TypeError("Gather failed")
         log: list[dict] = []
@@ -387,9 +404,9 @@ def main(
             instance_arr: list[dict]
             log.extend(instance_arr)
 
-        # Make dataframe
-        # df = pd.DataFrame({"target_name": classes, "pass_rate": rates})
-        # df.to_csv(f"{out_dir}/pass_rates.csv", index=False)
+        pre_plog_path = out_dir.joinpath(f"peak_log_unclustered.csv")
+        print(f"Exporting un-clustered log to {pre_plog_path}", v=v)
+        pd.DataFrame(log).to_csv(pre_plog_path, index=False)
 
         # Cluster peaks for later plotting
         peak_log, cluster_stats = Cluster(pd.DataFrame(log), cophen_dist_thresh).get()
@@ -398,7 +415,7 @@ def main(
             peak_log.to_csv(f"{out_dir}/peak_log.csv", index=False)
             cluster_stats.to_csv(f"{out_dir}/cluster_stats.csv", index=False)
         else:
-            print(f"{pick_root} seems empty. No tables exported.")
+            print(f"{pick_root} seems empty. No tables exported.", v=v)
 
 
 def depr_main(
